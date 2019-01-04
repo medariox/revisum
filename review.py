@@ -19,10 +19,12 @@ class WeightedReview(object):
         self._patch_content = None
         self.repo_id = repo_id
         self.id = pull.id
+        self.number = pull.number
         self.title = pull.title
         self.state = pull.state
         self.merged = pull.merged
-        self.patch_url = 'https://patch-diff.githubusercontent.com/raw/pymedusa/Medusa/pull/5643.patch'
+        self.patch_url = pull.patch_url
+        # self.patch_url = 'https://patch-diff.githubusercontent.com/raw/pymedusa/Medusa/pull/5643.patch'
         # self.patch_url = 'https://patch-diff.githubusercontent.com/raw/pymedusa/Medusa/pull/5813.patch'
 
         print(self.repo_id)
@@ -42,7 +44,7 @@ class WeightedReview(object):
                 continue
 
             for hunk_no, hunk in enumerate(change, 1):
-                snippet_id = '-'.join([str(file_no), str(hunk_no), str(self.id)])
+                snippet_id = '-'.join([str(file_no), str(hunk_no), str(self.number)])
                 snippet = Snippet(snippet_id, hunk, change.source_file, change.target_file)
                 self.snippets.append(snippet)
 
@@ -73,6 +75,8 @@ class WeightedReview(object):
         self._patch_content = content
 
 
+review_count = 0
+snippets = []
 for pull in pulls:
     reviews = pull.get_reviews()
     rev_len = reviews.totalCount
@@ -81,10 +85,11 @@ for pull in pulls:
         continue
 
     weighted_review = WeightedReview(repo.id, pull)
-    break
+    snippets += weighted_review.snippets()
 
-
-snippets = weighted_review.snippets()
+    review_count += 1
+    if review_count == 10:
+        break
 
 SnippetsTrainer(snippets).train()
 
