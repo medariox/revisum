@@ -1,12 +1,11 @@
-import re
 
 import requests
 from github import Github
 from unidiff import PatchSet
-from gensim.test.utils import common_texts
-from gensim.models.doc2vec import Doc2Vec, TaggedDocument
-
 from snippet import Snippet
+from trainer import SnippetsTrainer
+
+from gensim.models.doc2vec import Doc2Vec
 
 g = Github("medariox", "comliebt92")
 
@@ -34,42 +33,20 @@ class WeightedReview(object):
             return True
         return False
 
-    def added(self):
-        matches = re.findall(r'^\+(?!\+|\s*\n)\s*(.*)', self.patch_content, re.M)
-        lexed_matches = []
-        for match in matches:
-            tokens = lex(match, PythonLexer())
-            tokens_list = []
-            for token in tokens:
-                if token[0] is Token.Text:
-                    continue
-                tokens_list.append(token[1])
-            if tokens_list:
-                lexed_matches.append(tokens_list)
-
-        return lexed_matches
-
-    def added_snippets(self):
+    def snippets(self):
         patch = PatchSet(self.patch_content)
+
         self.snippets = []
-        for file_num, change in enumerate(patch, 1):
-            print(change.target_file)
+        for file_no, change in enumerate(patch, 1):
             if not self.is_supported(change.target_file):
                 continue
 
-            for i, hunk in enumerate(change, 1):
-                snippet_id = str(file_num) + '-' + str(i) + '-' + str(self.id)
+            for hunk_no, hunk in enumerate(change, 1):
+                snippet_id = '-'.join([str(file_no), str(hunk_no), str(self.id)])
                 snippet = Snippet(snippet_id, hunk, change.source_file, change.target_file)
                 self.snippets.append(snippet)
 
         return self.snippets
-
-    def removed(self):
-        matches = re.findall(r'^\-(?!\-|\s*\n)\s*(.*)', self.patch_content, re.M)
-        print(matches)
-        for match in matches:
-            bla = lex(match, PythonLexer())
-            print(list(bla))
 
     @property
     def patch_content(self):
@@ -107,43 +84,9 @@ for pull in pulls:
     break
 
 
-added_snippets = weighted_review.added_snippets()
+snippets = weighted_review.snippets()
 
-data = []
-for snippet in added_snippets:
-    data.append((snippet.id, snippet.as_tokens()))
-
-
-def train_model(data, update=False):
-    tagged_data = []
-    for i, snippet in data:
-        snippet_lines = []
-        for line in snippet:
-            snippet_lines += line
-        print(snippet_lines)
-        print(str(i))
-        tagged_line = TaggedDocument(words=snippet_lines, tags=[i])
-        tagged_data.append(tagged_line)
-
-    if not update:
-        model = Doc2Vec(vector_size=50,
-                        alpha=0.025,
-                        min_alpha=0.00025,
-                        min_count=1,
-                        dm=0)
-        model.build_vocab(tagged_data)
-    else:
-        model = Doc2Vec.load("d2v.model")
-        model.build_vocab(tagged_data, update=True)
-
-    for epoch in range(100):
-        print('iteration {0}'.format(epoch))
-        model.train(tagged_data,
-                    total_examples=model.corpus_count,
-                    epochs=model.epochs)
-
-    model.save("d2v.model")
-    print("Model Saved")
+SnippetsTrainer(snippets).train()
 
 
 def eval_model():
@@ -158,7 +101,4 @@ def eval_model():
     print('For {input} matched {result}!'.format(input=tokens, result=sims[0][0]))
 
 
-train_model(data)
-
-for go in range(20):
-    eval_model()
+eval_model()
