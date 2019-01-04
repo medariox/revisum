@@ -10,6 +10,3 @@ gensim = "*"
 pygithub = "*"
 pygments = "*"
 unidiff = "*"
-
-[requires]
-python_version = "3.6"
