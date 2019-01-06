@@ -9,7 +9,6 @@ class Snippet(object):
         self.id = id
         self._hunk = hunk
         self.start = hunk.target_start
-        self.end = 42
         self.source_file = source
         self.target_file = target
 
@@ -31,7 +30,7 @@ class Snippet(object):
         if not self._source_lines:
             self._normalize_lines('source')
         return self._source_lines
-    
+
     @staticmethod
     def _verify_arg(arg):
         if arg not in ('target', 'source'):
