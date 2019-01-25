@@ -1,6 +1,4 @@
-from pygments import lex
-from pygments.lexers import PythonLexer
-from pygments.token import Token
+from tokenizer import LinesTokenizer
 
 
 class Snippet(object):
@@ -61,14 +59,4 @@ class Snippet(object):
         elif origin == 'source':
             lines = self.source_lines()
 
-        lexed_lines = []
-        for line in lines:
-            tokens = lex(line, PythonLexer())
-            tokens_list = []
-            for token in tokens:
-                if token[0] is Token.Text:
-                    continue
-                tokens_list.append(token[1])
-            if tokens_list:
-                lexed_lines.append(tokens_list)
-        return lexed_lines
+        return LinesTokenizer(lines).tokens

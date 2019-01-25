@@ -80,10 +80,13 @@ snippets = []
 for pull in pulls:
     reviews = pull.get_reviews()
     rev_len = reviews.totalCount
+
+    # No reviews found
     if rev_len == 0:
-        print("No reviews for {0}".format(pull.title))
+        print("No reviews for: {0}".format(pull.title))
         continue
 
+    print("Found reviews for: {0}".format(pull.title))
     weighted_review = WeightedReview(repo.id, pull)
     snippets += weighted_review.snippets()
 
