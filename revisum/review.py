@@ -100,7 +100,7 @@ SnippetsTrainer(snippets).train()
 def eval_model():
     model = Doc2Vec.load("d2v.model")
 
-    tokens = "from .compat import parse_http_list as _parse_list_bottom".split()
+    tokens = "param_ordered_dict = collections.OrderedDict((('z', 1), ('a', 1), ('k', 1), ('d', 1)))".split()
     new_vector = model.infer_vector(tokens)
     sims = model.docvecs.most_similar([new_vector])
 
