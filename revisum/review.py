@@ -18,8 +18,6 @@ class WeightedReview(object):
         # self.patch_url = 'https://patch-diff.githubusercontent.com/raw/pymedusa/Medusa/pull/5643.patch'
         # self.patch_url = 'https://patch-diff.githubusercontent.com/raw/pymedusa/Medusa/pull/5813.patch'
 
-        print(self.repo_id)
-
     @staticmethod
     def is_supported(target_file):
         if target_file.endswith('.py'):
@@ -35,7 +33,7 @@ class WeightedReview(object):
                 continue
 
             for hunk_no, hunk in enumerate(change, 1):
-                snippet_id = '-'.join([str(file_no), str(hunk_no), str(self.number)])
+                snippet_id = '-'.join([str(hunk_no), str(file_no), str(self.number), str(self.repo_id)])
                 snippet = Snippet(snippet_id, hunk, change.source_file, change.target_file)
                 self.snippets.append(snippet)
 
