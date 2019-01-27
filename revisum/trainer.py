@@ -27,7 +27,8 @@ class SnippetsTrainer(object):
             for line in snippet.as_tokens():
                 snippet_lines += line
             print(snippet_lines)
-            tagged_line = TaggedDocument(words=snippet_lines, tags=[snippet.id])
+            tagged_line = TaggedDocument(words=snippet_lines,
+                                         tags=[snippet.snippet_id])
             tagged_data.append(tagged_line)
 
         if not update:

@@ -1,6 +1,6 @@
 from gensim.models.doc2vec import Doc2Vec
 from github import Github
-from review import WeightedReview
+from pull_request import ReviewedPullRequest
 from trainer import SnippetsTrainer
 
 
@@ -10,35 +10,15 @@ repo = g.get_repo("requests/requests")
 pulls = repo.get_pulls(state='all')
 
 
-def has_valid_review(pull):
-    reviews = pull.get_reviews()
-
-    rev_len = reviews.totalCount
-    if rev_len == 0:
-        print("No review for: {0}".format(pull.title))
-        return False
-
-    for review in reviews:
-        print(review.state)
-        print(pull.number)
-        if review.body != '':
-            print("Found review for: {0}".format(pull.title))
-            print(review.body)
-            return True
-
-    print("No valid review for: {0}".format(pull.title))
-    return False
-
-
 review_count = 0
 snippets = []
 
 for pull in pulls:
 
-    if has_valid_review(pull):
-
-        weighted_review = WeightedReview(repo.id, pull)
-        snippets += weighted_review.snippets()
+    pull_request = ReviewedPullRequest(repo.id, pull)
+    if pull_request.has_valid_review():
+        snippets += pull_request.snippets()
+        pull_request.save()
         review_count += 1
 
     if review_count == 10:

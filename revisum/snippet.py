@@ -3,8 +3,8 @@ from tokenizer import LinesTokenizer
 
 class Snippet(object):
 
-    def __init__(self, id, hunk, source, target):
-        self.id = id
+    def __init__(self, snippet_id, hunk, source, target):
+        self.snippet_id = snippet_id
         self._hunk = hunk
         self.start = hunk.target_start
         self.source_file = source
