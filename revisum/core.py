@@ -2,6 +2,7 @@ from gensim.models.doc2vec import Doc2Vec
 from github import Github
 from pull_request import ReviewedPullRequest
 from trainer import SnippetsTrainer
+from snippet import Snippet
 
 
 g = Github("medariox", "comliebt92")
@@ -28,15 +29,19 @@ SnippetsTrainer(snippets).train()
 
 
 def eval_model():
-    model = Doc2Vec.load("d2v.model")
+    model = Doc2Vec.load('d2v.model')
 
-    tokens = "param_ordered_dict = collections.OrderedDict((('z', 1), ('a', 1), ('k', 1), ('d', 1)))".split()
+    tokens = Snippet.tokenize('assert normalize_percent_encode(p.url) == expected')
+    print(tokens)
     new_vector = model.infer_vector(tokens)
     sims = model.docvecs.most_similar([new_vector])
 
     print(sims)
+    snippet_id = sims[0][0]
     print('--------------------------------------')
-    print('For {input} matched {result}!'.format(input=tokens, result=sims[0][0]))
+    print('For {input} matched {result}!'.format(input=tokens,
+                                                 result=snippet_id))
+    print(Snippet.load(snippet_id))
 
 
 eval_model()

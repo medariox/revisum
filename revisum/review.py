@@ -1,4 +1,4 @@
-from database import Review, maybe_init
+from database.review import Review, maybe_init
 
 
 class ValidReview(object):
@@ -12,6 +12,7 @@ class ValidReview(object):
 
     def save(self):
         maybe_init(self.repo_id)
+
         review = Review.get_or_none(review_id=self.review_id)
         if review:
             (Review

@@ -1,4 +1,7 @@
+import json
+
 from tokenizer import LinesTokenizer
+from database.snippet import maybe_init, Snippet as DataSnippet
 
 
 class Snippet(object):
@@ -18,6 +21,14 @@ class Snippet(object):
     def __str__(self):
         print('-------------------------------------------------------------')
         return '\n'.join(line for line in self.target_lines())
+
+    @staticmethod
+    def repo_id(snippet_id):
+        return snippet_id.split('-')[3]
+
+    @staticmethod
+    def pr_number(snippet_id):
+        return snippet_id.split('-')[2]
 
     def target_lines(self):
         if not self._target_lines:
@@ -60,3 +71,59 @@ class Snippet(object):
             lines = self.source_lines()
 
         return LinesTokenizer(lines).tokens
+
+    def as_json(self, origin='target'):
+        self._verify_arg(origin)
+        if origin == 'target':
+            lines = self.target_lines()
+        elif origin == 'source':
+            lines = self.source_lines()
+
+        return json.dumps(lines)
+
+    @classmethod
+    def tokenize(cls, code):
+        if not isinstance(code, list):
+            code = [code]
+
+        tokens = LinesTokenizer(code).tokens
+        lines = []
+        for line in tokens:
+            lines.extend(line)
+
+        return lines
+
+    @classmethod
+    def load(cls, snippet_id):
+        repo_id = cls.repo_id(snippet_id)
+        pr_number = cls.pr_number(snippet_id)
+        maybe_init(repo_id, pr_number)
+
+        snippet = DataSnippet.get_or_none(snippet_id=snippet_id)
+        if snippet:
+            return snippet.target_lines
+
+    def save(self):
+        repo_id = self.repo_id(self.snippet_id)
+        pr_number = self.pr_number(self.snippet_id)
+        maybe_init(repo_id, pr_number)
+
+        snippet = DataSnippet.get_or_none(snippet_id=self.snippet_id)
+        if snippet:
+            (DataSnippet
+             .update(snippet_id=self.snippet_id,
+                     start=self.start,
+                     source=self.source_file,
+                     target=self.target_file,
+                     source_lines=self.as_tokens('source'),
+                     target_lines=self.as_tokens())
+             .where(DataSnippet.snippet_id == self.snippet_id)
+             .execute())
+        else:
+            (DataSnippet
+             .create(snippet_id=self.snippet_id,
+                     start=self.start,
+                     source=self.source_file,
+                     target=self.target_file,
+                     source_lines=self.as_tokens('source'),
+                     target_lines=self.as_tokens()))
