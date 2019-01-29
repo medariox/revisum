@@ -1,7 +1,7 @@
 import os.path
 
 from utils import get_project_root
-from peewee import SqliteDatabase, Model, CharField, IntegerField
+from peewee import SqliteDatabase, Model, BlobField, CharField, IntegerField
 
 
 db = SqliteDatabase(None)
@@ -23,7 +23,7 @@ def maybe_init(repo_id, pr_number):
         'synchronous': 0})
 
     if not os.path.isfile(db_path):
-        print('Snippet database created')
+        print('Snippet database created for: {0}-{1}'.format(pr_number, repo_id))
         create()
 
 
@@ -37,8 +37,7 @@ class Snippet(Model):
     start = IntegerField()
     source = CharField()
     target = CharField()
-    source_lines = CharField()
-    target_lines = CharField()
+    hunk = BlobField()
 
     class Meta:
         database = db

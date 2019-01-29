@@ -1,5 +1,7 @@
+import os.path
 
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+from utils import get_project_root
 
 
 class SnippetsTrainer(object):
@@ -21,10 +23,14 @@ class SnippetsTrainer(object):
         return self._snippets
 
     def train(self, update=False):
+        path = get_project_root()
+        model_path = os.path.join(path, 'data', 'd2v.model')
+
         tagged_data = []
         for snippet in self.snippets:
             snippet_lines = []
-            for line in snippet.as_tokens():
+            # Only use target snippets for now
+            for line in snippet.as_tokens('target'):
                 snippet_lines += line
             print(snippet_lines)
             tagged_line = TaggedDocument(words=snippet_lines,
@@ -39,14 +45,14 @@ class SnippetsTrainer(object):
                             dm=0)
             model.build_vocab(tagged_data)
         else:
-            model = Doc2Vec.load("d2v.model")
+            model = Doc2Vec.load(model_path)
             model.build_vocab(tagged_data, update=True)
 
         for epoch in range(100):
-            print('iteration {0}'.format(epoch))
+            print('Training iteration: {0}'.format(epoch))
             model.train(tagged_data,
                         total_examples=model.corpus_count,
                         epochs=model.epochs)
 
-        model.save("d2v.model")
-        print("Model Saved")
+        model.save(model_path)
+        print('Model saved')

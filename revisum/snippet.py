@@ -1,4 +1,5 @@
 import json
+import pickle
 
 from tokenizer import LinesTokenizer
 from database.snippet import maybe_init, Snippet as DataSnippet
@@ -19,7 +20,7 @@ class Snippet(object):
         self._source_tokens = []
 
     def __str__(self):
-        print('-------------------------------------------------------------')
+        print('-----------------------------------------------')
         return '\n'.join(line for line in self.target_lines())
 
     @staticmethod
@@ -46,7 +47,7 @@ class Snippet(object):
             raise ValueError('{arg} value has to be either `target` or'
                              ' `source`.'.format(arg=arg))
 
-    def _normalize_lines(self, origin='target'):
+    def _normalize_lines(self, origin):
         self._verify_arg(origin)
         if origin == 'target':
             lines = self._hunk.target_lines()
@@ -63,7 +64,7 @@ class Snippet(object):
                 single_line = single_line.replace(pre_char, ' ', 1)
             destination.append(single_line)
 
-    def as_tokens(self, origin='target'):
+    def as_tokens(self, origin):
         self._verify_arg(origin)
         if origin == 'target':
             lines = self.target_lines()
@@ -72,7 +73,7 @@ class Snippet(object):
 
         return LinesTokenizer(lines).tokens
 
-    def as_json(self, origin='target'):
+    def as_json(self, origin):
         self._verify_arg(origin)
         if origin == 'target':
             lines = self.target_lines()
@@ -84,7 +85,7 @@ class Snippet(object):
     @classmethod
     def tokenize(cls, code):
         if not isinstance(code, list):
-            code = [code]
+            code = list(code)
 
         tokens = LinesTokenizer(code).tokens
         lines = []
@@ -101,7 +102,10 @@ class Snippet(object):
 
         snippet = DataSnippet.get_or_none(snippet_id=snippet_id)
         if snippet:
-            return snippet.target_lines
+            return pickle.loads(snippet.hunk)
+
+    def _serialize_hunk(self):
+        return pickle.dumps(self._hunk, pickle.HIGHEST_PROTOCOL)
 
     def save(self):
         repo_id = self.repo_id(self.snippet_id)
@@ -115,8 +119,7 @@ class Snippet(object):
                      start=self.start,
                      source=self.source_file,
                      target=self.target_file,
-                     source_lines=self.as_tokens('source'),
-                     target_lines=self.as_tokens())
+                     hunk=self._serialize_hunk())
              .where(DataSnippet.snippet_id == self.snippet_id)
              .execute())
         else:
@@ -125,5 +128,4 @@ class Snippet(object):
                      start=self.start,
                      source=self.source_file,
                      target=self.target_file,
-                     source_lines=self.as_tokens('source'),
-                     target_lines=self.as_tokens()))
+                     hunk=self._serialize_hunk()))

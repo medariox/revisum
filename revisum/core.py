@@ -1,9 +1,11 @@
+import os.path
+
 from gensim.models.doc2vec import Doc2Vec
 from github import Github
 from pull_request import ReviewedPullRequest
 from trainer import SnippetsTrainer
 from snippet import Snippet
-
+from utils import get_project_root
 
 g = Github("medariox", "comliebt92")
 
@@ -29,7 +31,9 @@ SnippetsTrainer(snippets).train()
 
 
 def eval_model():
-    model = Doc2Vec.load('d2v.model')
+    path = get_project_root()
+    model_path = os.path.join(path, 'data', 'd2v.model')
+    model = Doc2Vec.load(model_path)
 
     tokens = Snippet.tokenize('assert normalize_percent_encode(p.url) == expected')
     print(tokens)

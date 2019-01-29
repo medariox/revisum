@@ -9,6 +9,7 @@ class ValidReview(object):
         self.pr_number = pr_number
         self.review_id = review.id
         self.state = review.state
+        self.user_id = review.user.id
 
     def save(self):
         maybe_init(self.repo_id)
@@ -20,6 +21,7 @@ class ValidReview(object):
                      pr_number=self.pr_number,
                      repo_id=self.repo_id,
                      state=self.state,
+                     user_id=self.user_id,
                      body=self.body)
              .where(Review.review_id == self.review_id)
              .execute())
@@ -29,4 +31,5 @@ class ValidReview(object):
                      pr_number=self.pr_number,
                      repo_id=self.repo_id,
                      state=self.state,
+                     user_id=self.user_id,
                      body=self.body))

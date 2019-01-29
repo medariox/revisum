@@ -23,7 +23,7 @@ def maybe_init(repo_id):
         'synchronous': 0})
 
     if not os.path.isfile(db_path):
-        print('Review database created')
+        print('Review database created for: {0}'.format(repo_id))
         create()
 
 
@@ -37,6 +37,7 @@ class Review(Model):
     pr_number = IntegerField()
     repo_id = IntegerField()
     state = CharField()
+    user_id = IntegerField()
     body = CharField()
 
     class Meta:
