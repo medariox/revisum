@@ -33,7 +33,7 @@ def create():
 
 class Review(Model):
 
-    review_id = IntegerField()
+    comment_id = IntegerField()
     pr_number = IntegerField()
     repo_id = IntegerField()
     state = CharField()

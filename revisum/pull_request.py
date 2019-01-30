@@ -95,13 +95,11 @@ class ReviewedPullRequest(object):
         if self.state == 'closed':
             comments = self._pull.get_issue_comments()
             com_len = comments.totalCount
-            if com_len == 0:
-                return False
-
-            for comment in comments:
-                self._valid_reviews.append(ValidReview(
-                    self.repo_id, self.number, comment, state='CLOSED'))
-            return True
+            if com_len > 0:
+                for comment in comments:
+                    self._valid_reviews.append(ValidReview(
+                        self.repo_id, self.number, comment, state='CLOSED'))
+                return True
 
         return False
 
