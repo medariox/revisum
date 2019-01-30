@@ -18,7 +18,7 @@ class SnippetsTrainer(object):
         :type: list
         """
         if not isinstance(self._snippets, list):
-            self._snippets = list(self._snippets)
+            self._snippets = [self._snippets]
 
         return self._snippets
 

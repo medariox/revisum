@@ -3,13 +3,13 @@ from database.review import Review, maybe_init
 
 class ValidReview(object):
 
-    def __init__(self, repo_id, pr_number, review):
-        self.body = review.body
+    def __init__(self, repo_id, pr_number, comment, state=None):
         self.repo_id = repo_id
         self.pr_number = pr_number
-        self.review_id = review.id
-        self.state = review.state
-        self.user_id = review.user.id
+        self.body = comment.body
+        self.review_id = comment.id
+        self.user_id = comment.user.id
+        self.state = state or comment.state
 
     def save(self):
         maybe_init(self.repo_id)

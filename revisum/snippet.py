@@ -85,12 +85,12 @@ class Snippet(object):
     @classmethod
     def tokenize(cls, code):
         if not isinstance(code, list):
-            code = list(code)
+            code = [code]
 
         tokens = LinesTokenizer(code).tokens
         lines = []
         for line in tokens:
-            lines.extend(line)
+            lines += line
 
         return lines
 

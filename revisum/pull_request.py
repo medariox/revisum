@@ -74,20 +74,35 @@ class ReviewedPullRequest(object):
     def has_valid_review(self):
         reviews = self._pull.get_reviews()
         rev_len = reviews.totalCount
-        if rev_len == 0:
-            print('No review for: {0}'.format(self.title))
+        if rev_len > 0:
+            for comment in reviews:
+                if comment.body != '':
+                    self._valid_reviews.append(ValidReview(
+                        self.repo_id, self.number, comment))
+
+        if not self._valid_reviews and not self._closed_with_comment():
+            print('No comment review for: {0}'.format(self.title))
             return False
 
-        for review in reviews:
-            if review.body != '':
-                self._valid_reviews.append(ValidReview(
-                    self.repo_id, self.number, review))
-
         if self._valid_reviews:
-            print('Found reviews for: {0}'.format(self.title))
+            print('Found valid review for: {0}'.format(self.title))
             return True
 
         print('No valid review for: {0}'.format(self.title))
+        return False
+
+    def _closed_with_comment(self):
+        if self.state == 'closed':
+            comments = self._pull.get_issue_comments()
+            com_len = comments.totalCount
+            if com_len == 0:
+                return False
+
+            for comment in comments:
+                self._valid_reviews.append(ValidReview(
+                    self.repo_id, self.number, comment, state='CLOSED'))
+            return True
+
         return False
 
     def save(self):
