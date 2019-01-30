@@ -81,7 +81,7 @@ class ReviewedPullRequest(object):
                         self.repo_id, self.number, comment))
 
         if not self._valid_reviews and not self._closed_with_comment():
-            print('No comment review for: {0}'.format(self.title))
+            print('No review for: {0}'.format(self.title))
             return False
 
         if self._valid_reviews:
