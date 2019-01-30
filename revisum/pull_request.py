@@ -6,6 +6,7 @@ from review import ValidReview
 
 
 class ReviewedPullRequest(object):
+    ignored_comments = ['# [Codecov]']
 
     def __init__(self, repo_id, pull):
         self._patch_content = None
@@ -96,7 +97,11 @@ class ReviewedPullRequest(object):
             comments = self._pull.get_issue_comments()
             com_len = comments.totalCount
             if com_len > 0:
+                # Skip comments that contain any of these words
+                ignored = ReviewedPullRequest.ignored_comments
                 for comment in comments:
+                    if any(item in comment.body for item in ignored):
+                        continue
                     self._valid_reviews.append(ValidReview(
                         self.repo_id, self.number, comment, state='CLOSED'))
                 return True
