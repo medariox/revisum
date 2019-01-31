@@ -6,7 +6,7 @@ from review import ValidReview
 
 
 class ReviewedPullRequest(object):
-    ignored_comments = ['# [Codecov]']
+    ignored_bots = ['codecov-io', 'renovate[bot]', 'deepcode[bot]']
 
     def __init__(self, repo_id, pull):
         self._patch_content = None
@@ -78,8 +78,10 @@ class ReviewedPullRequest(object):
         if rev_len > 0:
             for comment in reviews:
                 if comment.body != '':
-                    self._valid_reviews.append(ValidReview(
-                        self.repo_id, self.number, comment))
+                    self._valid_reviews.append(
+                        ValidReview(self.repo_id, self.number,
+                                    self.merged, comment)
+                    )
 
         if not self._valid_reviews and not self._closed_with_comment():
             print('No review for: {0}'.format(self.title))
@@ -93,17 +95,19 @@ class ReviewedPullRequest(object):
         return False
 
     def _closed_with_comment(self):
-        if self.state == 'closed':
+        if not self.merged and self.state == 'closed':
             comments = self._pull.get_issue_comments()
             com_len = comments.totalCount
             if com_len > 0:
-                # Skip comments that contain any of these words
-                ignored = ReviewedPullRequest.ignored_comments
+                # Skip comments that were made by these bots
+                ignored_bots = ReviewedPullRequest.ignored_bots
                 for comment in comments:
-                    if any(item in comment.body for item in ignored):
+                    if comment.user.login in ignored_bots:
                         continue
-                    self._valid_reviews.append(ValidReview(
-                        self.repo_id, self.number, comment, state='CLOSED'))
+                    self._valid_reviews.append(
+                        ValidReview(self.repo_id, self.number, self.merged,
+                                    comment, state='CLOSED')
+                    )
                 return True
 
         return False
