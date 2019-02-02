@@ -35,6 +35,7 @@ class Snippet(Model):
 
     snippet_id = CharField()
     start = IntegerField()
+    length = IntegerField()
     source = CharField()
     target = CharField()
     hunk = BlobField()

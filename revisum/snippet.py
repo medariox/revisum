@@ -11,6 +11,7 @@ class Snippet(object):
         self.snippet_id = snippet_id
         self._hunk = hunk
         self.start = hunk.target_start
+        self.length = hunk.target_length
         self.source_file = source
         self.target_file = target
 
@@ -117,6 +118,7 @@ class Snippet(object):
             (DataSnippet
              .update(snippet_id=self.snippet_id,
                      start=self.start,
+                     length=self.length,
                      source=self.source_file,
                      target=self.target_file,
                      hunk=self._serialize_hunk())
@@ -126,6 +128,7 @@ class Snippet(object):
             (DataSnippet
              .create(snippet_id=self.snippet_id,
                      start=self.start,
+                     length=self.length,
                      source=self.source_file,
                      target=self.target_file,
                      hunk=self._serialize_hunk()))
