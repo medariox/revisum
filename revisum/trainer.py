@@ -48,7 +48,7 @@ class SnippetsTrainer(object):
             model = Doc2Vec.load(model_path)
             model.build_vocab(tagged_data, update=True)
 
-        for epoch in range(100):
+        for epoch in range(2):
             print('Training iteration: {0}'.format(epoch))
             model.train(tagged_data,
                         total_examples=model.corpus_count,

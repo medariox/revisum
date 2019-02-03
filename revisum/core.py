@@ -25,7 +25,7 @@ for pull in pulls:
         pull_request.save()
         review_count += 1
 
-    if review_count == 10:
+    if review_count == 300:
         break
 
 SnippetsTrainer(snippets).train()
