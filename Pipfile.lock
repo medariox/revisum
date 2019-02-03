@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "dd12c3ebf3bb8a3dd9e023d15633a9e7b190312f8497de3acc46fb7d58cb42c0"
+            "sha256": "e7f3c4c48369b4163aedf7b588e35fa4156fac493790ac3071a71d7797427472"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -70,6 +70,13 @@
             ],
             "version": "==0.14"
         },
+        "falcon": {
+            "hashes": [
+                "sha256:0a66b33458fab9c1e400a9be1a68056abda178eb02a8cb4b8f795e9df20b053b",
+                "sha256:3981f609c0358a9fcdb25b0e7fab3d9e23019356fb429c635ce4133135ae1bc4"
+            ],
+            "version": "==1.4.1"
+        },
         "gensim": {
             "hashes": [
                 "sha256:02a2063eaf0e47d22002a29ac94f135279ce3a8ee9f878cb5d1608eb662b3b0e",
@@ -98,6 +105,13 @@
             ],
             "index": "pypi",
             "version": "==3.7.1"
+        },
+        "hug": {
+            "hashes": [
+                "sha256:7b633ebbed95f4c264a745cf91450007fe7004e1eaa5b02bf9b3ad28fdd62d08"
+            ],
+            "index": "pypi",
+            "version": "==2.4.1"
         },
         "idna": {
             "hashes": [
@@ -177,6 +191,13 @@
             ],
             "markers": "python_version >= '2.7'",
             "version": "==2.7.5"
+        },
+        "python-mimeparse": {
+            "hashes": [
+                "sha256:76e4b03d700a641fd7761d3cd4fdbbdcd787eade1ebfac43f877016328334f78",
+                "sha256:a295f03ff20341491bfe4717a39cd0a8cc9afad619ba44b77e86b0ab8a2b8282"
+            ],
+            "version": "==1.6.0"
         },
         "requests": {
             "hashes": [
