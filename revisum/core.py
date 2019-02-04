@@ -19,21 +19,21 @@ snippets = []
 
 for pull in pulls:
 
-    pull_request = ReviewedPullRequest(repo.id, pull)
+    pull_request = ReviewedPullRequest(repo.id, pull.number)
     if pull_request.has_valid_review():
         snippets += pull_request.snippets()
         pull_request.save()
         review_count += 1
 
-    if review_count == 300:
+    if review_count == 20:
         break
 
-SnippetsTrainer(snippets).train()
+SnippetsTrainer(snippets).train(repo.id)
 
 
-def eval_model():
+def eval_model(repo_id):
     path = get_project_root()
-    model_path = os.path.join(path, 'data', 'd2v.model')
+    model_path = os.path.join(path, 'data', str(repo_id), 'd2v.model')
     model = Doc2Vec.load(model_path)
 
     code = ['try:', 'return complexjson.loads(self.text, **kwargs)', 'except JSONDecodeError:',
@@ -56,4 +56,4 @@ def eval_model():
     print(review)
 
 
-eval_model()
+eval_model(repo.id)

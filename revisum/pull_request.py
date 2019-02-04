@@ -3,23 +3,18 @@ import requests
 from snippet import Snippet
 from unidiff import PatchSet
 from review import ValidReview
+from github import Github
 
 
 class ReviewedPullRequest(object):
     ignored_bots = ['codecov-io', 'renovate[bot]', 'deepcode[bot]']
 
-    def __init__(self, repo_id, pull):
+    def __init__(self, repo_id, pull_number):
+        self._pull = None
         self._patch_content = None
         self._valid_reviews = []
-        self._pull = pull
         self.repo_id = repo_id
-        self.number = pull.number
-        self.title = pull.title
-        self.state = pull.state
-        self.merged = pull.merged
-        self.patch_url = pull.patch_url
-        # self.patch_url = 'https://patch-diff.githubusercontent.com/raw/pymedusa/Medusa/pull/5643.patch'
-        # self.patch_url = 'https://patch-diff.githubusercontent.com/raw/pymedusa/Medusa/pull/5813.patch'
+        self.number = pull_number
 
     @staticmethod
     def is_supported(target_file):
@@ -42,6 +37,21 @@ class ReviewedPullRequest(object):
                 self.snippets.append(snippet)
 
         return self.snippets
+
+    @property
+    def pull(self):
+        """
+        Get the pull request.
+
+        :return: The pull request.
+        :type: PullRequest object
+        """
+        if not self._pull:
+            g = Github("medariox", "comliebt92")
+            pull = g.get_repo(self.repo_id).get_pull(self.number)
+            self._pull = pull
+
+        return self._pull
 
     @property
     def patch_content(self):
@@ -68,12 +78,28 @@ class ReviewedPullRequest(object):
         self._patch_content = content
 
     @property
+    def title(self):
+        return self.pull.title
+
+    @property
+    def state(self):
+        return self.pull.state
+
+    @property
+    def merged(self):
+        return self.pull.merged
+
+    @property
+    def patch_url(self):
+        return self.pull.patch_url
+
+    @property
     def valid_reviews(self):
         if self._valid_reviews or self.has_valid_review():
             return self._valid_reviews
 
     def has_valid_review(self):
-        reviews = self._pull.get_reviews()
+        reviews = self.pull.get_reviews()
         rev_len = reviews.totalCount
         if rev_len > 0:
             for comment in reviews:
@@ -96,7 +122,7 @@ class ReviewedPullRequest(object):
 
     def _closed_with_comment(self):
         if not self.merged and self.state == 'closed':
-            comments = self._pull.get_issue_comments()
+            comments = self.pull.get_issue_comments()
             com_len = comments.totalCount
             if com_len > 0:
                 # Skip comments that were made by these bots
