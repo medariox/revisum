@@ -28,7 +28,7 @@ for pull in pulls:
     if review_count == 20:
         break
 
-SnippetsTrainer(snippets).train(repo.id)
+SnippetsTrainer(snippets).train(repo.id, force=True)
 
 
 def eval_model(repo_id):
@@ -41,15 +41,17 @@ def eval_model(repo_id):
 
     tokens = Snippet.tokenize(code)
     print(tokens)
+
     new_vector = model.infer_vector(tokens)
     sims = model.docvecs.most_similar([new_vector])
-
     print(sims)
+
     snippet_id = sims[0][0]
     print('--------------------------------------')
     print('For {input} matched {result}!'.format(input=tokens,
                                                  result=snippet_id))
     print(Snippet.load(snippet_id))
+
     print('Reason:')
     review = ValidReview.load(Snippet.pr_number(snippet_id),
                               Snippet.repo_id(snippet_id))

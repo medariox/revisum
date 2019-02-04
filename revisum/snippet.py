@@ -1,4 +1,3 @@
-import json
 import pickle
 
 from tokenizer import LinesTokenizer
@@ -21,7 +20,6 @@ class Snippet(object):
         self._source_tokens = []
 
     def __str__(self):
-        print('-----------------------------------------------')
         return '\n'.join(line for line in self.target_lines())
 
     @staticmethod
@@ -74,15 +72,6 @@ class Snippet(object):
 
         return LinesTokenizer(lines).tokens
 
-    def as_json(self, origin):
-        self._verify_arg(origin)
-        if origin == 'target':
-            lines = self.target_lines()
-        elif origin == 'source':
-            lines = self.source_lines()
-
-        return json.dumps(lines)
-
     @classmethod
     def tokenize(cls, code):
         if not isinstance(code, list):
@@ -105,8 +94,8 @@ class Snippet(object):
         if snippet:
             return pickle.loads(snippet.hunk)
 
-    def _serialize_hunk(self):
-        return pickle.dumps(self._hunk, pickle.HIGHEST_PROTOCOL)
+    def _serialize(self):
+        return pickle.dumps(self, pickle.HIGHEST_PROTOCOL)
 
     def save(self):
         repo_id = self.repo_id(self.snippet_id)
@@ -121,7 +110,7 @@ class Snippet(object):
                      length=self.length,
                      source=self.source_file,
                      target=self.target_file,
-                     hunk=self._serialize_hunk())
+                     hunk=self._serialize())
              .where(DataSnippet.snippet_id == self.snippet_id)
              .execute())
         else:
@@ -131,4 +120,4 @@ class Snippet(object):
                      length=self.length,
                      source=self.source_file,
                      target=self.target_file,
-                     hunk=self._serialize_hunk()))
+                     hunk=self._serialize()))

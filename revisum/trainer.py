@@ -15,6 +15,7 @@ class SnippetsTrainer(object):
     def snippets(self):
         """
         Gets all the snippets used for the training.
+
         :return: All the availible snippets.
         :type: list
         """
@@ -26,14 +27,14 @@ class SnippetsTrainer(object):
     @property
     def tokens(self):
         """
-        Gets all the snippets used for the training.
+        Snippets used for the training as tokens.
 
-        :return: All the availible snippets.
+        :return: List of tokens.
         :type: list
         """
         if not self._tokens:
             if self.external:
-                self._tokens = [self.snippets]
+                self._tokens = [{'0': self.snippets}]
             else:
                 self._tokens = [
                     self._to_tokens(s) for s in self.snippets
@@ -44,7 +45,7 @@ class SnippetsTrainer(object):
     @staticmethod
     def _to_tokens(snippet):
         """
-        Represent a snippet as a single list of tokens.
+        Represent a whole snippet as a single list of tokens.
 
         :type: list
         """
@@ -53,7 +54,7 @@ class SnippetsTrainer(object):
         for line in snippet.as_tokens('target'):
             snippet_lines += line
 
-        return snippet_lines
+        return {snippet.snippet_id: snippet_lines}
 
     def evaluate(self, repo_id, threshold=0.75):
         path = get_project_root()
@@ -62,23 +63,32 @@ class SnippetsTrainer(object):
             return []
 
         model = Doc2Vec.load(model_path)
-        for token_list in self.tokens:
-            print(token_list)
-            new_vector = model.infer_vector(token_list)
-            sims = model.docvecs.most_similar([new_vector])
-            print(sims)
+        results = []
+        for snippet_tokens in self.tokens:
+            snippet = {}
+            for snippet_id, token_list in snippet_tokens.items():
+                new_vector = model.infer_vector(token_list)
+                sims = model.docvecs.most_similar([new_vector])
 
-        best_snippets = [snip[0] for snip in sims if snip[1] >= threshold]
-        return best_snippets
+                candidates = [{'id': snip[0], 'confidence': snip[1]}
+                              for snip in sims if snip[1] >= threshold]
+                if candidates:
+                    snippet['id'] = snippet_id
+                    snippet['candidates'] = candidates
 
-    def train(self, repo_id, force=False):
+                    results.append(snippet)
+
+        return results
+
+    def train(self, repo_id, iterations=100, force=False):
         path = get_project_root()
         model_dir = os.path.join(path, 'data', str(repo_id))
         model_path = os.path.join(model_dir, 'd2v.model')
 
         tagged_data = []
         for snippet in self.snippets:
-            tagged_line = TaggedDocument(words=self._to_tokens(snippet),
+            tokenized_snippet = self._to_tokens(snippet)[snippet.snippet_id]
+            tagged_line = TaggedDocument(words=tokenized_snippet,
                                          tags=[snippet.snippet_id])
             tagged_data.append(tagged_line)
 
@@ -91,7 +101,6 @@ class SnippetsTrainer(object):
                             alpha=0.025,
                             min_alpha=0.00025,
                             min_count=1,
-                            hs=1,
                             dm=0)
             model.build_vocab(tagged_data)
         else:
@@ -99,7 +108,9 @@ class SnippetsTrainer(object):
             model = Doc2Vec.load(model_path)
             model.build_vocab(tagged_data, update=True)
 
-        for epoch in range(100):
+        print('Unique word tokens: {0}'.format(len(model.wv.vocab)))
+        print('Trained document tags: {0}'.format(len(model.docvecs)))
+        for epoch in range(iterations):
             print('Training iteration: {0}'.format(epoch))
             model.train(tagged_data,
                         total_examples=model.corpus_count,
