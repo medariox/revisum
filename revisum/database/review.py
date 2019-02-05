@@ -1,7 +1,13 @@
 import os.path
 
 from utils import get_project_root
-from peewee import BooleanField, SqliteDatabase, Model, CharField, IntegerField
+from peewee import (
+    BooleanField,
+    SqliteDatabase,
+    Model, CharField,
+    FloatField,
+    IntegerField
+)
 
 
 db = SqliteDatabase(None)
@@ -38,6 +44,7 @@ class Review(Model):
     pr_merged = BooleanField()
     repo_id = IntegerField()
     state = CharField()
+    rating = FloatField()
     user_id = IntegerField()
     user_login = CharField()
     body = CharField()

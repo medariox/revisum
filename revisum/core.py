@@ -31,7 +31,7 @@ for pull in pulls:
 SnippetsTrainer(snippets).train(repo.id, force=True)
 
 
-def eval_model(repo_id):
+def evaluate(repo_id):
     path = get_project_root()
     model_path = os.path.join(path, 'data', str(repo_id), 'd2v.model')
     model = Doc2Vec.load(model_path)
@@ -55,7 +55,9 @@ def eval_model(repo_id):
     print('Reason:')
     review = ValidReview.load(Snippet.pr_number(snippet_id),
                               Snippet.repo_id(snippet_id))
-    print(review)
+    print(review.body)
+    print('Rating:')
+    print(review.rating)
 
 
-eval_model(repo.id)
+evaluate(repo.id)

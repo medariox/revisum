@@ -13,6 +13,15 @@ class ValidReview(object):
         self.user_login = comment.user.login
         self.state = state or comment.state
 
+    @property
+    def rating(self):
+        if self.state == 'CLOSED':
+            return 1.0
+        elif self.state == 'APPROVED' or self.pr_merged:
+            return 5.0
+
+        return 1.0
+
     @classmethod
     def load(cls, pr_number, repo_id):
         maybe_init(repo_id)
@@ -20,7 +29,7 @@ class ValidReview(object):
         review = Review.get_or_none(pr_number=pr_number,
                                     repo_id=repo_id)
         if review:
-            return review.body
+            return review
 
     def save(self):
         maybe_init(self.repo_id)
@@ -33,6 +42,7 @@ class ValidReview(object):
                      pr_merged=self.pr_merged,
                      repo_id=self.repo_id,
                      state=self.state,
+                     rating=self.rating,
                      user_id=self.user_id,
                      user_login=self.user_login,
                      body=self.body)
@@ -45,6 +55,7 @@ class ValidReview(object):
                      pr_merged=self.pr_merged,
                      repo_id=self.repo_id,
                      state=self.state,
+                     rating=self.rating,
                      user_id=self.user_id,
                      user_login=self.user_login,
                      body=self.body))

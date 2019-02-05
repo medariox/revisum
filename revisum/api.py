@@ -20,7 +20,8 @@ def retrieve(snippet_id: hug.types.text):
     return {
         'id': snippet_id,
         'tokens': snippet.as_tokens('target'),
-        'review': review
+        'rating': review.rating,
+        'review': review.body
     }
 
 
