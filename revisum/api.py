@@ -19,9 +19,9 @@ def retrieve(snippet_id: hug.types.text):
 
     return {
         'id': snippet_id,
-        'tokens': snippet.as_tokens('target'),
         'rating': review.rating,
-        'review': review.body
+        'review': review.body,
+        'tokens': snippet.as_tokens('target')
     }
 
 
@@ -37,7 +37,7 @@ def evaluate_code(repo_id: hug.types.number, snippet_url: hug.types.text,
     )
 
 
-@hug.get('/repos/{repo_id}/{pull_id}')
+@hug.get('/repos/{repo_id}/pulls/{pull_id}')
 def evaluate_snippet(repo_id: hug.types.number, pull_id: hug.types.number,
                      threshold: float = 0.75):
     snippets = ReviewedPullRequest(repo_id, pull_id).snippets()
