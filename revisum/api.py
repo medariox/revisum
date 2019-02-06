@@ -28,7 +28,7 @@ def retrieve(snippet_id: hug.types.text):
 @hug.get('/repos/{repo_id}')
 def evaluate_code(repo_id: hug.types.number, snippet_url: hug.types.text,
                   threshold: float = 0.75):
-    response = requests.get('https://bit.ly/2GjPkJw')
+    response = requests.get(snippet_url)
     code = [line for line in response.iter_lines(decode_unicode=True)]
     snippet = Snippet.tokenize(code)
 
@@ -67,4 +67,4 @@ def train(repo_id: hug.types.number, limit: hug.types.number = 10,
     SnippetsTrainer(snippets).train(
         repo_id=repo_id, iterations=iterations, force=True
     )
-    return 'Finished training {0} with {1} reviews.'.format(repo_id, limit)
+    return 'Finished training for repository: {0}'.format(repo_id)
