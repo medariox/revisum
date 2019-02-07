@@ -11,6 +11,7 @@ class LinesTokenizer(object):
             Token.Text,
             Token.Punctuation,
             Token.Comment,
+            Token.Comment.Single,
         ]
 
     @property
