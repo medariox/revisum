@@ -6,11 +6,10 @@ from pull_request import ReviewedPullRequest
 from review import ValidReview
 from trainer import SnippetsTrainer
 from snippet import Snippet
-from utils import get_project_root
+from utils import get_project_root, gh_session
 
-g = Github("medariox", "comliebt92")
 
-repo = g.get_repo("requests/requests")
+repo = gh_session().get_repo('requests/requests')
 pulls = repo.get_pulls(state='all')
 
 

@@ -4,6 +4,7 @@ from snippet import Snippet
 from unidiff import PatchSet
 from review import ValidReview
 from github import Github
+from utils import gh_session
 
 
 class ReviewedPullRequest(object):
@@ -47,8 +48,7 @@ class ReviewedPullRequest(object):
         :type: PullRequest object
         """
         if not self._pull:
-            g = Github("medariox", "comliebt92")
-            pull = g.get_repo(self.repo_id).get_pull(self.number)
+            pull = gh_session().get_repo(self.repo_id).get_pull(self.number)
             self._pull = pull
 
         return self._pull

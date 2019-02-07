@@ -5,10 +5,7 @@ from pull_request import ReviewedPullRequest
 from trainer import SnippetsTrainer
 from snippet import Snippet
 from review import ValidReview
-from github import Github
-
-
-g = Github("medariox", "comliebt92")
+from utils import gh_session
 
 
 @hug.get('/snippets/{snippet_id}')
@@ -50,7 +47,7 @@ def evaluate_snippet(repo_id: hug.types.number, pull_id: hug.types.number,
 @hug.put('/repos/{repo_id}/train')
 def train(repo_id: hug.types.number, limit: hug.types.number = 10,
           iterations: hug.types.number = 100):
-    pulls = g.get_repo(repo_id).get_pulls(state='all')
+    pulls = gh_session().get_repo(repo_id).get_pulls(state='all')
 
     review_count = 0
     snippets = []
