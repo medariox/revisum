@@ -3,7 +3,6 @@ import requests
 from snippet import Snippet
 from unidiff import PatchSet
 from review import ValidReview
-from github import Github
 from utils import gh_session
 
 

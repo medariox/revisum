@@ -1,7 +1,6 @@
 import os.path
 
 from gensim.models.doc2vec import Doc2Vec
-from github import Github
 from pull_request import ReviewedPullRequest
 from review import ValidReview
 from trainer import SnippetsTrainer

@@ -26,10 +26,14 @@ class ValidReview(object):
     def load(cls, pr_number, repo_id):
         maybe_init(repo_id)
 
-        review = Review.get_or_none(pr_number=pr_number,
-                                    repo_id=repo_id)
+        review = Review.select().where(
+            (Review.pr_number == pr_number) &
+            (Review.repo_id == repo_id))
+
         if review:
             return review
+
+        return []
 
     def save(self):
         maybe_init(self.repo_id)

@@ -11,15 +11,19 @@ from utils import gh_session
 @hug.get('/snippets/{snippet_id}')
 def retrieve(snippet_id: hug.types.text):
     snippet = Snippet.load(snippet_id)
-    review = ValidReview.load(Snippet.pr_number(snippet_id),
-                              Snippet.repo_id(snippet_id))
 
-    return {
-        'id': snippet_id,
-        'rating': review.rating,
-        'review': review.body,
-        'tokens': snippet.as_tokens('target')
-    }
+    if snippet:
+        reviews = ValidReview.load(Snippet.pr_number(snippet_id),
+                                   Snippet.repo_id(snippet_id))
+
+        revs = [{'rating': review.rating, 'body': review.body}
+                for review in reviews]
+
+        return {
+            'id': snippet_id,
+            'reviews': revs,
+            'tokens': snippet.as_tokens('target')
+        }
 
 
 @hug.get('/repos/{repo_id}')
