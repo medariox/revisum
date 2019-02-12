@@ -7,10 +7,8 @@ from trainer import SnippetsTrainer
 from snippet import Snippet
 from utils import get_project_root, gh_session
 
-
 repo = gh_session().get_repo('requests/requests')
 pulls = repo.get_pulls(state='all')
-
 
 review_count = 0
 snippets = []
@@ -34,8 +32,11 @@ def evaluate(repo_id):
     model_path = os.path.join(path, 'data', str(repo_id), 'd2v.model')
     model = Doc2Vec.load(model_path)
 
-    code = ['try:', 'return complexjson.loads(self.text, **kwargs)', 'except JSONDecodeError:',
-            "print('Response content is not in the json format')"]
+    code = [
+        'try:', 'return complexjson.loads(self.text, **kwargs)',
+        'except JSONDecodeError:',
+        "print('Response content is not in the json format')"
+    ]
 
     tokens = Snippet.tokenize(code)
     print(tokens)
@@ -44,18 +45,23 @@ def evaluate(repo_id):
     sims = model.docvecs.most_similar([new_vector])
     print(sims)
 
+    print('The 100 most frequent words:')
+    print(model.wv.index2entity[:100])
+
     snippet_id = sims[0][0]
     print('--------------------------------------')
-    print('For {input} matched {result}!'.format(input=tokens,
-                                                 result=snippet_id))
+    print('For {input} matched {result}!'.format(
+        input=tokens, result=snippet_id))
     print(Snippet.load(snippet_id))
 
     print('Reason:')
-    review = ValidReview.load(Snippet.pr_number(snippet_id),
-                              Snippet.repo_id(snippet_id))
-    print(review.body)
-    print('Rating:')
-    print(review.rating)
+    reviews = ValidReview.load(
+        Snippet.pr_number(snippet_id), Snippet.repo_id(snippet_id))
+    for review in reviews:
+        print('Rating:')
+        print(review.rating)
+        print('Body:')
+        print(review.body)
 
 
-evaluate(repo.id)
+evaluate('74073233')

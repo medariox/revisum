@@ -13,6 +13,9 @@ class LinesTokenizer(object):
             Token.Comment,
             Token.Comment.Single,
         ]
+        self.char_exclusions = [
+            '.', '=', '"', "'",
+        ]
 
     @property
     def tokens(self):
@@ -25,6 +28,9 @@ class LinesTokenizer(object):
             for token in tokens:
                 if token[0] in self.exclusions:
                     continue
+                if token[1] in self.char_exclusions:
+                    continue
+
                 tokens_list.append(token[1])
 
             if tokens_list:
