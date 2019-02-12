@@ -8,7 +8,8 @@ from utils import gh_session
 
 
 class ReviewedPullRequest(object):
-    ignored_bots = ['codecov-io', 'renovate[bot]', 'deepcode[bot]']
+    ignored_bots = ['codecov-io', 'renovate[bot]', 'deepcode[bot]',
+                    'coveralls']
 
     def __init__(self, repo_id, pull_number):
         self._pull = None
