@@ -26,7 +26,7 @@ def retrieve(snippet_id: hug.types.text):
         }
 
 
-@hug.get('/repos/{repo_id}')
+@hug.get('/repos/{repo_id}/snippets')
 def evaluate_code(repo_id: hug.types.number, snippet_url: hug.types.text,
                   threshold: float = 0.75):
     response = requests.get(snippet_url)
