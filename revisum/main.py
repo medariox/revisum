@@ -1,10 +1,11 @@
 import os.path
 
 from gensim.models.doc2vec import Doc2Vec
+
 from pull_request import ReviewedPullRequest
 from review import ValidReview
-from trainer import SnippetsTrainer
 from snippet import Snippet
+from trainer import SnippetsTrainer
 from utils import get_project_root, gh_session
 
 repo = gh_session().get_repo('requests/requests')
