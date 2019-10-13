@@ -62,6 +62,8 @@ def train(repo_id: hug.types.number, limit: hug.types.number = 10,
             pull_request.save()
             review_count += 1
 
+        print('Total reviews: [{count}/{limit}]'.format(count=review_count,
+                                                        limit=limit))
         if review_count == limit:
             break
 

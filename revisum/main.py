@@ -8,28 +8,35 @@ from snippet import Snippet
 from trainer import SnippetsTrainer
 from utils import get_project_root, gh_session
 
-repo = gh_session().get_repo('requests/requests')
-pulls = repo.get_pulls(state='all')
 
-review_count = 0
-snippets = []
+def train():
+    repo = gh_session().get_repo('keon/algorithms')
+    pulls = repo.get_pulls(state='all')
 
-for pull in pulls:
+    review_count = 0
+    limit = 50
+    snippets = []
 
-    pull_request = ReviewedPullRequest(repo.id, pull.number)
-    if pull_request.has_valid_review() and pull_request.snippets:
-        for snippet in pull_request.snippets:
-            print('--------------------------------------------------------------------')
-            print(snippet.target_lines())
-            print('--------------------------------------------------------------------')
-        snippets += pull_request.snippets
-        pull_request.save()
-        review_count += 1
+    for pull in pulls:
 
-    if review_count == 4:
-        break
+        pull_request = ReviewedPullRequest(repo.id, pull.number)
+        if pull_request.has_valid_review() and pull_request.snippets:
+            for snippet in pull_request.snippets:
+                print('--------------------------------------------------------------------')
+                print(snippet.target_lines())
+                print('--------------------------------------------------------------------')
+            snippets += pull_request.snippets
+            pull_request.save()
+            review_count += 1
 
-SnippetsTrainer(snippets).train(repo.id, force=False)
+        print('Total reviews: [{count}/{limit}]'.format(count=review_count,
+                                                        limit=limit))
+        if review_count == limit:
+            break
+
+    SnippetsTrainer(snippets).train(repo.id, force=False)
+
+# train()
 
 
 def evaluate(repo_id):
@@ -37,10 +44,19 @@ def evaluate(repo_id):
     model_path = os.path.join(path, 'data', str(repo_id), 'd2v.model')
     model = Doc2Vec.load(model_path)
 
-    code = [
+    old_code = [
         'try:', 'return complexjson.loads(self.text, **kwargs)',
         'except JSONDecodeError:',
         "print('Response content is not in the json format')"
+    ]
+
+    code = [
+        'while', 'power', '>', '0', ':',
+        'if', 'power', '&', '1', ':',
+        'result', '=', '(', 'result', '*', 'base',
+        ')', '%', 'mod', 'power', '=', 'power', '>>', '1',
+        'base', '=', '(', 'base', '*', 'base', ')', '%', 'mod',
+        'return', 'result'
     ]
 
     tokens = Snippet.tokenize(code)
@@ -60,7 +76,11 @@ def evaluate(repo_id):
     print('--------------------------------------')
     print('For {input} matched {result}!'.format(
         input=tokens, result=snippet_id))
-    print(Snippet.load(snippet_id))
+
+    matched_code = Snippet.load(snippet_id)
+    print(matched_code)
+    matched_tokens = Snippet.tokenize(str(matched_code))
+    print(matched_tokens)
 
     print('Reason:')
     reviews = ValidReview.load(
@@ -72,4 +92,4 @@ def evaluate(repo_id):
         print(review.body)
 
 
-evaluate('1362490')
+evaluate('74073233')

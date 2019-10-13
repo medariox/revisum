@@ -101,7 +101,8 @@ class SnippetsTrainer(object):
                             alpha=0.025,
                             min_alpha=0.00025,
                             min_count=1,
-                            dm=0)
+                            dm=0,
+                            hs=1)
             model.build_vocab(tagged_data)
         else:
             print('Updating existing vocabulary')
