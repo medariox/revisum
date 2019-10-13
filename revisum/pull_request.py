@@ -14,6 +14,8 @@ class ReviewedPullRequest(object):
         self._pull = None
         self._patch_content = None
         self._valid_reviews = []
+        self._snippets = []
+
         self.repo_id = repo_id
         self.number = pull_number
 
@@ -23,10 +25,15 @@ class ReviewedPullRequest(object):
             return True
         return False
 
+    @property
     def snippets(self):
+        if not self._snippets:
+            self._set_snippets()
+        return self._snippets
+
+    def _set_snippets(self):
         patch = PatchSet(self.patch_content)
 
-        self.snippets = []
         for file_no, change in enumerate(patch, 1):
             if not self.is_supported(change.target_file):
                 continue
@@ -35,9 +42,7 @@ class ReviewedPullRequest(object):
                 snippet_id = '-'.join([str(hunk_no), str(file_no), str(self.number), str(self.repo_id)])
                 snippet = Snippet(snippet_id, hunk, change.source_file, change.target_file)
                 snippet.save()
-                self.snippets.append(snippet)
-
-        return self.snippets
+                self._snippets.append(snippet)
 
     @property
     def pull(self):

@@ -41,7 +41,7 @@ def evaluate_code(repo_id: hug.types.number, snippet_url: hug.types.text,
 @hug.get('/repos/{repo_id}/pulls/{pull_id}')
 def evaluate_snippet(repo_id: hug.types.number, pull_id: hug.types.number,
                      threshold: float = 0.75):
-    snippets = ReviewedPullRequest(repo_id, pull_id).snippets()
+    snippets = ReviewedPullRequest(repo_id, pull_id).snippets
 
     return SnippetsTrainer(snippets).evaluate(
         repo_id=repo_id, threshold=threshold
@@ -57,8 +57,8 @@ def train(repo_id: hug.types.number, limit: hug.types.number = 10,
     snippets = []
     for pull in pulls:
         pull_request = ReviewedPullRequest(repo_id, pull.number)
-        if pull_request.has_valid_review():
-            snippets += pull_request.snippets()
+        if pull_request.has_valid_review() and pull_request.snippets:
+            snippets += pull_request.snippets
             pull_request.save()
             review_count += 1
 

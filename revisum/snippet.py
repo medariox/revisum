@@ -85,6 +85,18 @@ class Snippet(object):
         return lines
 
     @classmethod
+    def tokenize_el(cls, code):
+        if not isinstance(code, list):
+            code = [code]
+
+        tokens = LinesTokenizer(code).elements
+        lines = []
+        for line in tokens:
+            lines += line
+
+        return lines
+
+    @classmethod
     def load(cls, snippet_id):
         repo_id = cls.repo_id(snippet_id)
         pr_number = cls.pr_number(snippet_id)

@@ -37,3 +37,24 @@ class LinesTokenizer(object):
                 lexed_lines.append(tokens_list)
 
         return lexed_lines
+
+    @property
+    def elements(self):
+        lexed_elements = []
+
+        for line in self._lines:
+            tokens = lex(line, PythonLexer())
+            tokens_list = []
+
+            for token in tokens:
+                if token[0] in self.exclusions:
+                    continue
+                if token[1] in self.char_exclusions:
+                    continue
+
+                tokens_list.append(token[0])
+
+            if tokens_list:
+                lexed_elements.append(tokens_list)
+
+        return lexed_elements

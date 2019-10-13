@@ -17,15 +17,19 @@ snippets = []
 for pull in pulls:
 
     pull_request = ReviewedPullRequest(repo.id, pull.number)
-    if pull_request.has_valid_review():
-        snippets += pull_request.snippets()
+    if pull_request.has_valid_review() and pull_request.snippets:
+        for snippet in pull_request.snippets:
+            print('--------------------------------------------------------------------')
+            print(snippet.target_lines())
+            print('--------------------------------------------------------------------')
+        snippets += pull_request.snippets
         pull_request.save()
         review_count += 1
 
-    if review_count == 20:
+    if review_count == 4:
         break
 
-SnippetsTrainer(snippets).train(repo.id, force=True)
+SnippetsTrainer(snippets).train(repo.id, force=False)
 
 
 def evaluate(repo_id):
@@ -41,6 +45,9 @@ def evaluate(repo_id):
 
     tokens = Snippet.tokenize(code)
     print(tokens)
+
+    tokens_el = Snippet.tokenize_el(code)
+    print(tokens_el)
 
     new_vector = model.infer_vector(tokens)
     sims = model.docvecs.most_similar([new_vector])
@@ -65,4 +72,4 @@ def evaluate(repo_id):
         print(review.body)
 
 
-evaluate('74073233')
+evaluate('1362490')
