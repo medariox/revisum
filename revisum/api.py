@@ -57,7 +57,7 @@ def train(repo_id: hug.types.number, limit: hug.types.number = 10,
     snippets = []
     for pull in pulls:
         pull_request = ReviewedPullRequest(repo_id, pull.number)
-        if pull_request.has_valid_review() and pull_request.snippets:
+        if pull_request.is_valid:
             snippets += pull_request.snippets
             pull_request.save()
             review_count += 1

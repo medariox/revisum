@@ -20,22 +20,29 @@ class ReviewedPullRequest(object):
         self.number = pull_number
 
     @staticmethod
-    def is_supported(target_file):
+    def _is_supported(target_file):
         if target_file.endswith('.py'):
             return True
         return False
 
     @property
+    def is_valid(self):
+        return self.has_valid_review() and self.has_valid_snippet()
+
+    @property
     def snippets(self):
         if not self._snippets:
-            self._set_snippets()
+            self._make_snippets()
         return self._snippets
 
-    def _set_snippets(self):
+    def has_valid_snippet(self):
+        return bool(self.snippets)
+
+    def _make_snippets(self):
         patch = PatchSet(self.patch_content)
 
         for file_no, change in enumerate(patch, 1):
-            if not self.is_supported(change.target_file):
+            if not self._is_supported(change.target_file):
                 continue
 
             for hunk_no, hunk in enumerate(change, 1):

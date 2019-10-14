@@ -20,7 +20,7 @@ def train():
     for pull in pulls:
 
         pull_request = ReviewedPullRequest(repo.id, pull.number)
-        if pull_request.has_valid_review() and pull_request.snippets:
+        if pull_request.is_valid:
             for snippet in pull_request.snippets:
                 print('--------------------------------------------------------------------')
                 print(snippet.target_lines())
@@ -36,7 +36,8 @@ def train():
 
     SnippetsTrainer(snippets).train(repo.id, force=False)
 
-# train()
+
+train()
 
 
 def evaluate(repo_id):
@@ -50,13 +51,30 @@ def evaluate(repo_id):
         "print('Response content is not in the json format')"
     ]
 
+    min_code = [
+        """
+        from .modular_Exponential import *
+        """
+    ]
+
     code = [
-        'while', 'power', '>', '0', ':',
-        'if', 'power', '&', '1', ':',
-        'result', '=', '(', 'result', '*', 'base',
-        ')', '%', 'mod', 'power', '=', 'power', '>>', '1',
-        'base', '=', '(', 'base', '*', 'base', ')', '%', 'mod',
-        'return', 'result'
+        """
+        def modular_Exponential(base, power, mod):
+            if power < 0:
+                return -1
+            base %= mod
+            result = 1
+
+            while power > 0:
+                #If the last bit is 1, add 2^k.
+                if power & 1:
+                    result = (result * base) % mod
+                power = power >> 1
+                #Utilize modular multiplication properties to combine the computed mod C values.
+                base = (base * base) % mod
+
+            return result
+        """
     ]
 
     tokens = Snippet.tokenize(code)
