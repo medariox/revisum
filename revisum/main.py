@@ -10,11 +10,11 @@ from utils import get_project_root, gh_session
 
 
 def train():
-    repo = gh_session().get_repo('keon/algorithms')
+    repo = gh_session().get_repo('psf/requests')
     pulls = repo.get_pulls(state='all', sort='updated', direction='desc')
 
     review_count = 0
-    limit = 150
+    limit = 50
     snippets = []
 
     newest_review = ValidReview.newest_accepted(repo.id)
