@@ -51,7 +51,9 @@ def evaluate_snippet(repo_id: hug.types.number, pull_id: hug.types.number,
 @hug.put('/repos/{repo_id}/train')
 def train(repo_id: hug.types.number, limit: hug.types.number = 10,
           iterations: hug.types.number = 100):
-    pulls = gh_session().get_repo(repo_id).get_pulls(state='all')
+    pulls = gh_session().get_repo(repo_id).get_pulls(
+        state='all', sort='updated', direction='desc'
+    )
 
     review_count = 0
     snippets = []
@@ -62,8 +64,9 @@ def train(repo_id: hug.types.number, limit: hug.types.number = 10,
             pull_request.save()
             review_count += 1
 
-        print('Total reviews: [{count}/{limit}]'.format(count=review_count,
-                                                        limit=limit))
+        print('Total reviews: [{count}/{limit}]'.format(
+            count=review_count, limit=limit)
+        )
         if review_count == limit:
             break
 

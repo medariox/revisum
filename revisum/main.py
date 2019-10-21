@@ -11,13 +11,19 @@ from utils import get_project_root, gh_session
 
 def train():
     repo = gh_session().get_repo('keon/algorithms')
-    pulls = repo.get_pulls(state='all')
+    pulls = repo.get_pulls(state='all', sort='updated', direction='desc')
 
     review_count = 0
-    limit = 50
+    limit = 150
     snippets = []
 
+    newest_review = ValidReview.newest_accepted(repo.id)
+
     for pull in pulls:
+
+        if newest_review == pull.number:
+            print('Reached newest review!')
+            break
 
         pull_request = ReviewedPullRequest(repo.id, pull.number)
         if pull_request.is_valid:
@@ -29,12 +35,12 @@ def train():
             pull_request.save()
             review_count += 1
 
-        print('Total reviews: [{count}/{limit}]'.format(count=review_count,
-                                                        limit=limit))
+            print('Total reviews: [{count}/{limit}]'.format(count=review_count,
+                                                            limit=limit))
         if review_count == limit:
             break
 
-    SnippetsTrainer(snippets).train(repo.id, force=False)
+    SnippetsTrainer(snippets).train(repo.id, iterations=1, force=False)
 
 
 train()

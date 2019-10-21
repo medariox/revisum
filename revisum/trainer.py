@@ -107,11 +107,11 @@ class SnippetsTrainer(object):
         else:
             print('Updating existing vocabulary')
             model = Doc2Vec.load(model_path)
-            model.build_vocab(tagged_data, update=True)
+            # model.build_vocab(tagged_data, update=True)
 
         print('Unique word tokens: {0}'.format(len(model.wv.vocab)))
         print('Trained document tags: {0}'.format(len(model.docvecs)))
-        for epoch in range(iterations):
+        for epoch in range(1, iterations + 1):
             print('Training iteration: {0}'.format(epoch))
             model.train(tagged_data,
                         total_examples=model.corpus_count,

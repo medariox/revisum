@@ -35,6 +35,19 @@ class ValidReview(object):
 
         return []
 
+    @classmethod
+    def newest_accepted(cls, repo_id):
+        maybe_init(repo_id)
+
+        review = (Review.select(Review.pr_number).where(
+            (Review.repo_id == repo_id) &
+            (Review.state.in_(['APPROVED', 'CLOSED'])))
+            .order_by(Review.pr_number.desc())
+            .first())
+
+        if review:
+            return review.pr_number
+
     def save(self):
         maybe_init(self.repo_id)
 

@@ -122,14 +122,18 @@ class ReviewedPullRequest(object):
                     )
 
         if not self._valid_reviews and not self._closed_with_comment():
-            print('No review for: {0}'.format(self.title))
+            print('No review for: {0} [{1}]'.format(self.title, self.number))
             return False
 
         if self._valid_reviews:
-            print('Found valid review for: {0}'.format(self.title))
+            print(
+                'Found valid review for: {0} [{1}]'.format(
+                    self.title, self.number
+                )
+            )
             return True
 
-        print('No valid review for: {0}'.format(self.title))
+        print('No valid review for: {0} [{1}]'.format(self.title, self.number))
         return False
 
     def _closed_with_comment(self):
