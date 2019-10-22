@@ -33,7 +33,6 @@ code_to_find = [
 def evaluate():
 
     tokens = Snippet.tokenize(code_to_find)
-    print(tokens)
 
     for test_dir in os.listdir(tests_data):
 
@@ -45,7 +44,6 @@ def evaluate():
         new_vector = model.infer_vector(tokens)
         sims = model.docvecs.most_similar([new_vector])
         confidence = sims[0][1]
-        print(sims)
 
         print('--------------------------------------')
         print('For {input} matched {result}!'.format(
@@ -55,11 +53,14 @@ def evaluate():
         print(matched_code)
         matched_tokens = Snippet.tokenize(str(matched_code))
         print(matched_tokens)
+        print(sims)
 
         # assert confidence > 0.95
 
         snippet_id = sims[0][0]
         print(snippet_id)
+        print(iterations)
+        print(snippets)
 
         # assert snippet_id == '2-1-4915-1362490'
 
