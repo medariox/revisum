@@ -2,11 +2,11 @@ import os.path
 
 from gensim.models.doc2vec import Doc2Vec
 
-from pull_request import ReviewedPullRequest
-from review import ValidReview
-from snippet import Snippet
-from trainer import SnippetsTrainer
-from utils import get_project_root, gh_session
+from .pull_request import ReviewedPullRequest
+from .review import ValidReview
+from .snippet import Snippet
+from .trainer import SnippetsTrainer
+from .utils import get_project_root, gh_session
 
 
 def train():
@@ -14,7 +14,7 @@ def train():
     pulls = repo.get_pulls(state='all', sort='updated', direction='desc')
 
     review_count = 0
-    limit = 50
+    limit = 5
     snippets = []
 
     newest_review = ValidReview.newest_accepted(repo.id)
@@ -65,21 +65,18 @@ def evaluate(repo_id):
 
     code = [
         """
-        def modular_Exponential(base, power, mod):
-            if power < 0:
-                return -1
-            base %= mod
-            result = 1
+        def test_preparing_url(self, url, expected):
 
-            while power > 0:
-                #If the last bit is 1, add 2^k.
-                if power & 1:
-                    result = (result * base) % mod
-                power = power >> 1
-                #Utilize modular multiplication properties to combine the computed mod C values.
-                base = (base * base) % mod
+        def normalize_percent_encode(x):
+            # Helper function that normalizes equivalent
+            # percent-encoded bytes before comparisons
+            for c in re.findall(r'%[a-fA-F0-9]{2}', x):
+                x = x.replace(c, c.upper())
+            return x
 
-            return result
+        r = requests.Request('GET', url=url)
+        p = r.prepare()
+        assert normalize_percent_encode(p.url) == expected
         """
     ]
 
@@ -116,4 +113,4 @@ def evaluate(repo_id):
         print(review.body)
 
 
-evaluate('74073233')
+evaluate('1362490')

@@ -1,7 +1,7 @@
 import pickle
 
-from tokenizer import LinesTokenizer
-from database.snippet import maybe_init, Snippet as DataSnippet
+from .tokenizer import LinesTokenizer
+from .database.snippet import maybe_init, Snippet as DataSnippet
 
 
 class Snippet(object):
@@ -97,10 +97,10 @@ class Snippet(object):
         return lines
 
     @classmethod
-    def load(cls, snippet_id):
+    def load(cls, snippet_id, path=None):
         repo_id = cls.repo_id(snippet_id)
         pr_number = cls.pr_number(snippet_id)
-        maybe_init(repo_id, pr_number)
+        maybe_init(repo_id, pr_number, path)
 
         snippet = DataSnippet.get_or_none(snippet_id=snippet_id)
         if snippet:

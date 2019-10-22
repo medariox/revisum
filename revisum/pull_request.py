@@ -1,9 +1,9 @@
 import requests
-
-from snippet import Snippet
 from unidiff import PatchSet
-from review import ValidReview
-from utils import gh_session
+
+from .snippet import Snippet
+from .review import ValidReview
+from .utils import gh_session
 
 
 class ReviewedPullRequest(object):
@@ -48,7 +48,6 @@ class ReviewedPullRequest(object):
             for hunk_no, hunk in enumerate(change, 1):
                 snippet_id = '-'.join([str(hunk_no), str(file_no), str(self.number), str(self.repo_id)])
                 snippet = Snippet(snippet_id, hunk, change.source_file, change.target_file)
-                snippet.save()
                 self._snippets.append(snippet)
 
     @property
@@ -156,5 +155,8 @@ class ReviewedPullRequest(object):
 
     def save(self):
         if self.valid_reviews:
+            for snippet in self._snippets:
+                snippet.save()
+
             for valid_review in self._valid_reviews:
                 valid_review.save()

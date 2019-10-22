@@ -1,6 +1,6 @@
 import os.path
 
-from utils import get_project_root
+from ..utils import get_project_root
 from peewee import (
     BooleanField,
     SqliteDatabase,

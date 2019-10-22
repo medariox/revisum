@@ -1,7 +1,7 @@
 import os.path
 
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
-from utils import get_project_root
+from .utils import get_project_root
 
 
 class SnippetsTrainer(object):

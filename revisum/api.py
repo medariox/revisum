@@ -1,11 +1,11 @@
 import hug
 import requests
 
-from pull_request import ReviewedPullRequest
-from trainer import SnippetsTrainer
-from snippet import Snippet
-from review import ValidReview
-from utils import gh_session
+from .pull_request import ReviewedPullRequest
+from .trainer import SnippetsTrainer
+from .snippet import Snippet
+from .review import ValidReview
+from .utils import gh_session
 
 
 @hug.get('/snippets/{snippet_id}')

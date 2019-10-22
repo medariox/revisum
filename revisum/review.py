@@ -1,4 +1,4 @@
-from database.review import Review, maybe_init
+from .database.review import Review, maybe_init
 
 
 class ValidReview(object):

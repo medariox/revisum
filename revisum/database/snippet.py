@@ -1,15 +1,17 @@
 import os.path
 
-from utils import get_project_root
+from ..utils import get_project_root
 from peewee import SqliteDatabase, Model, BlobField, CharField, IntegerField
 
 
 db = SqliteDatabase(None)
 
 
-def maybe_init(repo_id, pr_number):
-    path = get_project_root()
-    db_dir = os.path.join(path, 'data', str(repo_id), 'snippets')
+def maybe_init(repo_id, pr_number, path=None):
+    if path is not None:
+        db_dir = os.path.join(path, 'snippets')
+    else:
+        db_dir = os.path.join(get_project_root(), 'data', str(repo_id), 'snippets')
     if not os.path.isdir(db_dir):
         os.makedirs(db_dir)
 
