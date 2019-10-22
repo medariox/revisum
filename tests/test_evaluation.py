@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.append('../revisum')
+sys.path.append('..' + os.sep + 'revisum')
 
 from pathlib import Path
 

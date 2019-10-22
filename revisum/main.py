@@ -14,7 +14,7 @@ def train():
     pulls = repo.get_pulls(state='all', sort='updated', direction='desc')
 
     review_count = 0
-    limit = 5
+    limit = 250
     snippets = []
 
     newest_review = ValidReview.newest_accepted(repo.id)

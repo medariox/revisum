@@ -116,3 +116,6 @@ dmypy.json
 
 # Visual Studio Code
 .vscode/*
+
+# Tests
+tests/data/
