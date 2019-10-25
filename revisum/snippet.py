@@ -100,7 +100,7 @@ class Snippet(object):
     def load(cls, snippet_id, path=None):
         repo_id = cls.repo_id(snippet_id)
         pr_number = cls.pr_number(snippet_id)
-        maybe_init(repo_id, pr_number, path)
+        maybe_init(repo_id, pr_number=pr_number, path=path)
 
         snippet = DataSnippet.get_or_none(snippet_id=snippet_id)
         if snippet:
@@ -112,7 +112,7 @@ class Snippet(object):
     def save(self):
         repo_id = self.repo_id(self.snippet_id)
         pr_number = self.pr_number(self.snippet_id)
-        maybe_init(repo_id, pr_number)
+        maybe_init(repo_id, pr_number=pr_number)
 
         snippet = DataSnippet.get_or_none(snippet_id=self.snippet_id)
         if snippet:

@@ -1,15 +1,22 @@
 import os.path
+import pickle
 
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from .utils import get_project_root
+from .database.snippet import maybe_init, Snippet as DataSnippet
 
 
 class SnippetsTrainer(object):
 
-    def __init__(self, snippets, external=False):
-        self._snippets = snippets
+    def __init__(self, snippets=None, repo_id=None, path=None, external=False):
+        if not (snippets or (repo_id and path)):
+            raise ValueError('SnippetsTrainer needs either snippets or repo_id')
+
+        self._snippets = snippets or self._from_db(repo_id, path)
+        self.repo_id = repo_id
         self.external = external
         self._tokens = []
+        self._tagged_data = []
 
     @property
     def snippets(self):
@@ -42,6 +49,24 @@ class SnippetsTrainer(object):
 
         return self._tokens
 
+    @property
+    def tagged_data(self):
+        if not self._tagged_data:
+            self._make_tagged_data()
+
+        return self._tagged_data
+
+    def _make_tagged_data(self):
+        tagged_data = []
+
+        for snippet in self.snippets:
+            tokenized_snippet = self._to_tokens(snippet)[snippet.snippet_id]
+            tagged_line = TaggedDocument(words=tokenized_snippet,
+                                         tags=[snippet.snippet_id])
+            tagged_data.append(tagged_line)
+
+        self._tagged_data = tagged_data
+
     @staticmethod
     def _to_tokens(snippet):
         """
@@ -55,6 +80,17 @@ class SnippetsTrainer(object):
             snippet_lines += line
 
         return {snippet.snippet_id: snippet_lines}
+
+    @staticmethod
+    def _from_db(repo_id, path=None):
+        maybe_init(repo_id, path=path)
+
+        snippets = []
+        for db_snippet in DataSnippet.select(DataSnippet.hunk):
+            snippet = pickle.loads(db_snippet.hunk)
+            snippets.append(snippet)
+
+        return snippets
 
     def evaluate(self, repo_id, threshold=0.75):
         path = get_project_root()
@@ -80,17 +116,17 @@ class SnippetsTrainer(object):
 
         return results
 
-    def train(self, repo_id, iterations=100, force=False):
-        path = get_project_root()
-        model_dir = os.path.join(path, 'data', str(repo_id))
+    def train(self, repo_id, iterations=100, force=False, path=None):
+        if path is not None:
+            model_dir = path
+        else:
+            model_dir = os.path.join(get_project_root(), 'data', str(repo_id))
+
         model_path = os.path.join(model_dir, 'd2v.model')
 
-        tagged_data = []
-        for snippet in self.snippets:
-            tokenized_snippet = self._to_tokens(snippet)[snippet.snippet_id]
-            tagged_line = TaggedDocument(words=tokenized_snippet,
-                                         tags=[snippet.snippet_id])
-            tagged_data.append(tagged_line)
+        if not self.tagged_data:
+            print('Nothing to train for: {0}'.format(repo_id))
+            return
 
         if force or not os.path.isfile(model_path):
             if not os.path.isdir(model_dir):
@@ -99,23 +135,36 @@ class SnippetsTrainer(object):
             print('Building new vocabulary')
             model = Doc2Vec(vector_size=50,
                             alpha=0.025,
-                            min_alpha=0.00025,
-                            min_count=1,
+                            # min_alpha=0.00025,
+                            min_count=2,
                             dm=0,
                             hs=1)
-            model.build_vocab(tagged_data)
+            model.build_vocab(self.tagged_data)
         else:
             print('Updating existing vocabulary')
             model = Doc2Vec.load(model_path)
+            model.trainables.reset_weights(model.hs, model.negative, model.wv, model.docvecs)
             # model.build_vocab(tagged_data, update=True)
+
+        self.iterate(iterations, repo_id=repo_id, model=model,
+                     model_path=model_path)
+
+    def iterate(self, times, **kwargs):
+        repo_id = kwargs.get('repo_id') or self.repo_id
+        if not times or times < 1:
+            print('No iterations for: {0}'.format(repo_id))
+            return
+
+        model = kwargs['model']
+        model_path = kwargs.get('model_path')
+        # Reset iterations
+        model.trainables.reset_weights(model.hs, model.negative, model.wv, model.docvecs)
+        model.train(documents=self.tagged_data,
+                    total_examples=model.corpus_count,
+                    epochs=times)
 
         print('Unique word tokens: {0}'.format(len(model.wv.vocab)))
         print('Trained document tags: {0}'.format(len(model.docvecs)))
-        for epoch in range(1, iterations + 1):
-            print('Training iteration: {0}'.format(epoch))
-            model.train(tagged_data,
-                        total_examples=model.corpus_count,
-                        epochs=model.epochs)
 
         model.save(model_path)
         print('Model saved for: {0}'.format(repo_id))

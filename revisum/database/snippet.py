@@ -7,15 +7,15 @@ from peewee import SqliteDatabase, Model, BlobField, CharField, IntegerField
 db = SqliteDatabase(None)
 
 
-def maybe_init(repo_id, pr_number, path=None):
+def maybe_init(repo_id, pr_number=None, path=None):
     if path is not None:
-        db_dir = os.path.join(path, 'snippets')
+        db_dir = path
     else:
-        db_dir = os.path.join(get_project_root(), 'data', str(repo_id), 'snippets')
+        db_dir = os.path.join(get_project_root(), 'data', str(repo_id))
     if not os.path.isdir(db_dir):
         os.makedirs(db_dir)
 
-    db_name = str(pr_number) + '.db'
+    db_name = 'snippets.db'
     db_path = os.path.join(db_dir, db_name)
     db.init(db_path, pragmas={
         'journal_mode': 'wal',
@@ -25,8 +25,12 @@ def maybe_init(repo_id, pr_number, path=None):
         'synchronous': 0})
 
     if not os.path.isfile(db_path):
-        print('Snippet database created for: {0}-{1}'.format(pr_number, repo_id))
+        if pr_number is None:
+            print('PR number required to init a snippet for: {0}'.format(repo_id))
+            return
+
         create()
+        print('Snippet database created for: {0}-{1}'.format(pr_number, repo_id))
 
 
 def create():

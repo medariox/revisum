@@ -14,7 +14,7 @@ def train():
     pulls = repo.get_pulls(state='all', sort='updated', direction='desc')
 
     review_count = 0
-    limit = 250
+    limit = 50
     snippets = []
 
     newest_review = ValidReview.newest_accepted(repo.id)
@@ -43,7 +43,7 @@ def train():
     SnippetsTrainer(snippets).train(repo.id, iterations=1, force=False)
 
 
-train()
+# train()
 
 
 def evaluate(repo_id):
@@ -65,18 +65,12 @@ def evaluate(repo_id):
 
     code = [
         """
-        def test_preparing_url(self, url, expected):
-
         def normalize_percent_encode(x):
             # Helper function that normalizes equivalent
             # percent-encoded bytes before comparisons
             for c in re.findall(r'%[a-fA-F0-9]{2}', x):
                 x = x.replace(c, c.upper())
             return x
-
-        r = requests.Request('GET', url=url)
-        p = r.prepare()
-        assert normalize_percent_encode(p.url) == expected
         """
     ]
 

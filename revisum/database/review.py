@@ -29,8 +29,8 @@ def maybe_init(repo_id):
         'synchronous': 0})
 
     if not os.path.isfile(db_path):
-        print('Review database created for: {0}'.format(repo_id))
         create()
+        print('Review database created for: {0}'.format(repo_id))
 
 
 def create():

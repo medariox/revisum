@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from revisum.snippet import Snippet
+from revisum.trainer import SnippetsTrainer
 from gensim.models.doc2vec import Doc2Vec
 
 
@@ -29,38 +30,62 @@ code_to_find = [
     """
 ]
 
+other_code = [
+    """
+    def normalize_percent_encode(x):
+        # Helper function that normalizes equivalent
+        # percent-encoded bytes before comparisons
+        for c in re.findall(r'%[a-fA-F0-9]{2}', x):
+            x = x.replace(c, c.upper())
+        return x
+    """
+]
 
 def evaluate():
 
-    tokens = Snippet.tokenize(code_to_find)
+    tokens = Snippet.tokenize(other_code)
 
     for test_dir in os.listdir(tests_data):
 
-        repo_id, iterations, snippets = test_dir.split('_')
+        # repo_id, iterations, snippets = test_dir.split('_')
 
-        model_path = os.path.join(tests_data, test_dir, 'd2v.model')
+        model_dir = os.path.join(tests_data, test_dir)
+        model_path = os.path.join(model_dir, 'd2v.model')
+
+        if not os.path.isfile(model_path):
+            if not os.path.isdir(model_dir):
+                os.makedirs(model_dir)
+
         model = Doc2Vec.load(model_path)
-
-        new_vector = model.infer_vector(tokens)
-        sims = model.docvecs.most_similar([new_vector])
-        confidence = sims[0][1]
+        # model.trainables.reset_weights(model.hs, model.negative, model.wv, model.docvecs)
 
         print('--------------------------------------')
-        print('For {input} matched {result}!'.format(
-            input=tokens, result=sims[0][0]))
+
+        SnippetsTrainer(repo_id=str(test_dir), path=model_dir).iterate(
+            15, model=model, model_path=model_path)
+
+        model2 = Doc2Vec.load(model_path)
+        new_vector = model2.infer_vector(tokens)
+        sims = model2.docvecs.most_similar([new_vector])
+        confidence = sims[0][1]
+
+        print('\n')
+        print(tokens)
 
         matched_code = Snippet.load(sims[0][0], path=os.path.join(tests_data, test_dir))
-        print(matched_code)
         matched_tokens = Snippet.tokenize(str(matched_code))
         print(matched_tokens)
+        print('\n')
         print(sims)
+        print('\n')
 
         # assert confidence > 0.95
 
         snippet_id = sims[0][0]
-        print(snippet_id)
-        print(iterations)
-        print(snippets)
+        print('Iterations: ' + str(model2.epochs))
+        print('Confidence: ' + str(confidence))
+        print('Snippet ID: ' + snippet_id)
+        print('\n')
 
         # assert snippet_id == '2-1-4915-1362490'
 
