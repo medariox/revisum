@@ -71,10 +71,14 @@ def evaluate():
 
         print('\n')
         print(tokens)
+        tokens_el = Snippet.tokenize_el(tokens)
+        print(tokens_el)
 
         matched_code = Snippet.load(sims[0][0], path=os.path.join(tests_data, test_dir))
         matched_tokens = Snippet.tokenize(str(matched_code))
         print(matched_tokens)
+        tokens_el = Snippet.tokenize_el(matched_tokens)
+        print(tokens_el)
         print('\n')
         print(sims)
         print('\n')
@@ -88,6 +92,9 @@ def evaluate():
         print('\n')
 
         # assert snippet_id == '2-1-4915-1362490'
+
+        print('The 100 most frequent words:')
+        print(model.wv.index2entity[:100])
 
 
 evaluate()
