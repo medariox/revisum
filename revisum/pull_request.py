@@ -10,14 +10,15 @@ class ReviewedPullRequest(object):
     ignored_bots = ['codecov-io', 'renovate[bot]', 'deepcode[bot]',
                     'coveralls']
 
-    def __init__(self, repo_id, pull_number):
+    def __init__(self, repo_id, pr_number, pr_head=None):
         self._pull = None
         self._patch_content = None
         self._valid_reviews = []
         self._snippets = []
 
         self.repo_id = repo_id
-        self.number = pull_number
+        self.number = pr_number
+        self.head = pr_head
 
     @staticmethod
     def _is_supported(target_file):
@@ -44,6 +45,8 @@ class ReviewedPullRequest(object):
         for file_no, change in enumerate(patch, 1):
             if not self._is_supported(change.target_file):
                 continue
+
+            print(change)
 
             for hunk_no, hunk in enumerate(change, 1):
                 snippet_id = '-'.join([str(hunk_no), str(file_no), str(self.number), str(self.repo_id)])

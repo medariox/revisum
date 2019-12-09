@@ -2,11 +2,11 @@ import os.path
 
 from gensim.models.doc2vec import Doc2Vec
 
-from .pull_request import ReviewedPullRequest
-from .review import ValidReview
-from .snippet import Snippet
-from .trainer import SnippetsTrainer
-from .utils import get_project_root, gh_session
+from revisum.pull_request import ReviewedPullRequest
+from revisum.review import ValidReview
+from revisum.snippet import Snippet
+from revisum.trainer import SnippetsTrainer
+from revisum.utils import get_project_root, gh_session
 
 
 def train():
@@ -25,7 +25,7 @@ def train():
             print('Reached newest review!')
             break
 
-        pull_request = ReviewedPullRequest(repo.id, pull.number)
+        pull_request = ReviewedPullRequest(repo.id, pull.number, pull.head)
         if pull_request.is_valid:
             for snippet in pull_request.snippets:
                 print('--------------------------------------------------------------------')
@@ -43,7 +43,7 @@ def train():
     SnippetsTrainer(snippets).train(repo.id, iterations=1, force=False)
 
 
-# train()
+train()
 
 
 def evaluate(repo_id):
