@@ -10,4 +10,4 @@ pulls = repo.get_pulls(state='all', sort='updated', direction='desc')
 
 for pull in pulls:
     bu = pull
-    print('haha')
+    print('hah2222a')
