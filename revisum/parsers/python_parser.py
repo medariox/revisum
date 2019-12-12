@@ -1,10 +1,10 @@
 import io
 
-from pathlib import Path
-
 from pygments import lex
 from pygments.lexers import PythonLexer
 from pygments.token import Token
+
+from .utils import reversed_enum
 
 
 class PythonFileParser(object):
@@ -12,7 +12,7 @@ class PythonFileParser(object):
     def __init__(self, file_path):
         self.file_path = file_path
         self._reset()
-        self.parse()
+        self.parse_single()
 
     @property
     def title(self):
@@ -24,9 +24,18 @@ class PythonFileParser(object):
 
         return title
 
-    def _read(self):
+    def _read(self, start=None):
         with io.open(self.file_path, encoding='utf-8') as f:
-            for i, line in enumerate(f, start=1):
+            for i, line in enumerate(f, 1):
+                if start is not None and i < start:
+                    continue
+                yield i, line.rstrip('\n')
+
+    def _read_reverse(self, start=None):
+        with io.open(self.file_path, encoding='utf-8') as f:
+            for i, line in reversed_enum(f, 1):
+                if start is not None and i > start:
+                    continue
                 yield i, line.rstrip('\n')
 
     def _is_complete(self):
@@ -67,13 +76,15 @@ class PythonFileParser(object):
 
                 return True
 
-    def parse(self):
-        for i, line in self._read():
+    def parse(self, start=None, stop=None):
+        for i, line in self._read(start=start):
             line_tokens = list(lex(line, PythonLexer()))
 
             if self.is_func_or_class(line_tokens):
                 if self._is_complete():
                     self._make_snippet()
+                if stop is not None and i > stop:
+                    break
 
                 self._snippet_body.append(line_tokens)
                 self._snippet_start = i
@@ -81,7 +92,23 @@ class PythonFileParser(object):
                 self._snippet_body.append(line_tokens)
                 self._snippet_end = i
 
-        self._make_snippet()
+        if self._snippet_body:
+            self._make_snippet()
+
+    def parse_single(self, start=None, stop=None):
+        for i, line in self._read_reverse(start=start):
+            line_tokens = list(lex(line, PythonLexer()))
+
+            if self.is_func_or_class(line_tokens):
+                if self._is_complete():
+                    self._reset()
+                    return self.parse(start=i, stop=stop)
+
+                self._snippet_body.append(line_tokens)
+                self._snippet_start = i
+            else:
+                self._snippet_body.append(line_tokens)
+                self._snippet_end = i
 
     def _make_snippet(self):
 
@@ -93,7 +120,7 @@ class PythonFileParser(object):
 
         for line_tokens in self._snippet_body:
             line = ''.join(line[1] for line in line_tokens)
-            print(line)
+            print(line, end='')
 
         print(self._snippet_start)
         print(self._snippet_end)
