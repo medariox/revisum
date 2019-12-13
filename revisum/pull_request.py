@@ -1,9 +1,11 @@
 import requests
+
 from unidiff import PatchSet
 
 from .snippet import Snippet
 from .review import ValidReview
 from .utils import gh_session
+from .parsers.python_parser import PythonFileParser
 
 
 class ReviewedPullRequest(object):
@@ -30,6 +32,12 @@ class ReviewedPullRequest(object):
     def is_valid(self):
         return self.has_valid_review() and self.has_valid_snippet()
 
+    def change_url(self, path):
+        repo_url = self.head.repo.html_url
+        sha = self.head.sha
+        url = '{0}/raw/{1}/{2}'.format(repo_url, sha, path)
+        return url
+
     @property
     def snippets(self):
         if not self._snippets:
@@ -46,9 +54,17 @@ class ReviewedPullRequest(object):
             if not self._is_supported(change.target_file):
                 continue
 
-            print(change)
+            snippet_url = self.change_url(change.path)
+            raw_snippet = requests.get(snippet_url)
+            if raw_snippet:
+                parser = PythonFileParser(raw_snippet)
 
             for hunk_no, hunk in enumerate(change, 1):
+
+                start = hunk.target_start
+                stop = start + hunk.target_length
+                parsed_f = parser.parse_single(start, stop)
+
                 snippet_id = '-'.join([str(hunk_no), str(file_no), str(self.number), str(self.repo_id)])
                 snippet = Snippet(snippet_id, hunk, change.source_file, change.target_file)
                 self._snippets.append(snippet)

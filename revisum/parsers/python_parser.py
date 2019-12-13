@@ -4,15 +4,15 @@ from pygments import lex
 from pygments.lexers import PythonLexer
 from pygments.token import Token
 
-from .utils import reversed_enum
+from ..utils import reverse_enum
 
 
 class PythonFileParser(object):
 
-    def __init__(self, file_path):
-        self.file_path = file_path
+    def __init__(self, raw_file):
+        self._raw_file = raw_file
+        self.snippets = []
         self._reset()
-        self.parse_single()
 
     @property
     def title(self):
@@ -24,19 +24,23 @@ class PythonFileParser(object):
 
         return title
 
+    @property
+    def f(self):
+        # f = open(self.file_path, encoding='utf-8')
+        f = self._raw_file.iter_lines(decode_unicode=True)
+        return f
+
     def _read(self, start=None):
-        with io.open(self.file_path, encoding='utf-8') as f:
-            for i, line in enumerate(f, 1):
-                if start is not None and i < start:
-                    continue
-                yield i, line.rstrip('\n')
+        for i, line in enumerate(self.f, 1):
+            if start is not None and i < start:
+                continue
+            yield i, line.rstrip('\n')
 
     def _read_reverse(self, start=None):
-        with io.open(self.file_path, encoding='utf-8') as f:
-            for i, line in reversed_enum(f, 1):
-                if start is not None and i > start:
-                    continue
-                yield i, line.rstrip('\n')
+        for i, line in reverse_enum(self.f, 1):
+            if start is not None and i > start:
+                continue
+            yield i, line.rstrip('\n')
 
     def _is_complete(self):
         if all([self._snippet_body, self._snippet_start, self._snippet_end]):
@@ -95,17 +99,20 @@ class PythonFileParser(object):
         if self._snippet_body:
             self._make_snippet()
 
-    def parse_single(self, start=None, stop=None):
+    def parse_single(self, start, stop):
+        self._snippet_start = start
+        self._snippet_end = stop
+
         for i, line in self._read_reverse(start=start):
             line_tokens = list(lex(line, PythonLexer()))
 
             if self.is_func_or_class(line_tokens):
+                self._snippet_body.append(line_tokens)
+                self._snippet_start = i
+
                 if self._is_complete():
                     self._reset()
                     return self.parse(start=i, stop=stop)
-
-                self._snippet_body.append(line_tokens)
-                self._snippet_start = i
             else:
                 self._snippet_body.append(line_tokens)
                 self._snippet_end = i
@@ -116,15 +123,16 @@ class PythonFileParser(object):
 
         print('----------------')
         print(self.title)
-        print('----------------')
-
-        for line_tokens in self._snippet_body:
-            line = ''.join(line[1] for line in line_tokens)
-            print(line, end='')
-
         print(self._snippet_start)
         print(self._snippet_end)
+        print('----------------')
 
+        snippet = []
+        for line_tokens in self._snippet_body:
+            line = ''.join(line[1] for line in line_tokens)
+            snippet.append(line)
+
+        self.snippets.append(snippet)
         self._reset()
 
     def _rm_last_line(self):
