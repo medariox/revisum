@@ -13,7 +13,7 @@ class PythonFileParser(object):
     def __init__(self, raw_file):
         self._raw_file = raw_file
         self._file_len = None
-        self.chunks = []
+        self._chunks = []
 
         self._reset()
 
@@ -123,7 +123,10 @@ class PythonFileParser(object):
         if self._snippet_body:
             self._make_chunk()
 
-        return self.chunks
+        chunks = self._chunks
+        self._chunks = []
+
+        return chunks
 
     def parse_single(self, start, stop):
         start = self.chunk_start(start)
@@ -179,6 +182,6 @@ class PythonFileParser(object):
         chunk = Chunk(self.chunk_name, self._snippet_body,
                       self._snippet_start, self._snippet_end)
 
-        self.chunks.append(chunk)
+        self._chunks.append(chunk)
 
         self._reset()
