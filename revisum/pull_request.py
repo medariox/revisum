@@ -12,7 +12,7 @@ class ReviewedPullRequest(object):
     ignored_bots = ['codecov-io', 'renovate[bot]', 'deepcode[bot]',
                     'coveralls']
 
-    def __init__(self, repo_id, pr_number, pr_head=None):
+    def __init__(self, repo_id, pr_number, repo_name=None, pr_head_sha=None):
         self._pull = None
         self._patch_content = None
         self._valid_reviews = []
@@ -20,7 +20,8 @@ class ReviewedPullRequest(object):
 
         self.repo_id = repo_id
         self.number = pr_number
-        self.head = pr_head
+        self.repo_name = repo_name
+        self.head_sha = pr_head_sha
 
     @staticmethod
     def _is_supported(target_file):
@@ -33,9 +34,9 @@ class ReviewedPullRequest(object):
         return self.has_valid_review() and self.has_valid_snippet()
 
     def change_url(self, path):
-        repo_url = self.head.repo.html_url
-        sha = self.head.sha
-        url = '{0}/raw/{1}/{2}'.format(repo_url, sha, path)
+        url = 'https://raw.githubusercontent.com/{0}/{1}/{2}'.format(
+            self.repo_name, self.head_sha, path
+        )
         return url
 
     @property
@@ -63,10 +64,12 @@ class ReviewedPullRequest(object):
 
                 start = hunk.target_start
                 stop = start + hunk.target_length
-                parsed_f = parser.parse_single(start, stop)
+                chunks = parser.parse_single(start, stop)
+                if not chunks:
+                    continue
 
                 snippet_id = '-'.join([str(hunk_no), str(file_no), str(self.number), str(self.repo_id)])
-                snippet = Snippet(snippet_id, hunk, change.source_file, change.target_file)
+                snippet = Snippet(snippet_id, chunks, change.source_file, change.target_file)
                 self._snippets.append(snippet)
 
     @property
@@ -92,7 +95,7 @@ class ReviewedPullRequest(object):
         :type: str
         """
         if not self._patch_content:
-            response = requests.get(self.patch_url)
+            response = requests.get(self.diff_url)
             self._patch_content = response.text
 
         return self._patch_content
@@ -120,8 +123,8 @@ class ReviewedPullRequest(object):
         return self.pull.merged
 
     @property
-    def patch_url(self):
-        return self.pull.patch_url
+    def diff_url(self):
+        return self.pull.diff_url
 
     @property
     def valid_reviews(self):

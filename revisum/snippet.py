@@ -6,11 +6,11 @@ from .database.snippet import maybe_init, Snippet as DataSnippet
 
 class Snippet(object):
 
-    def __init__(self, snippet_id, hunk, source, target):
+    def __init__(self, snippet_id, hunks, source, target):
         self.snippet_id = snippet_id
-        self._hunk = hunk
-        self.start = hunk.target_start
-        self.length = hunk.target_length
+        self._hunk = hunks
+        self.start = hunks[0].start
+        self.length = self.total_len(hunks[0].start, hunks[-1].end)
         self.source_file = source
         self.target_file = target
 
@@ -30,9 +30,18 @@ class Snippet(object):
     def pr_number(snippet_id):
         return snippet_id.split('-')[2]
 
+    @staticmethod
+    def total_len(start, end):
+        length = end - start + 1
+        return length
+
     def target_lines(self):
         if not self._target_lines:
-            self._normalize_lines('target')
+            # self._normalize_lines('target')
+            for hunk in self._hunk:
+                for line in hunk.lines:
+                    self._target_lines.append(line)
+
         return self._target_lines
 
     def source_lines(self):

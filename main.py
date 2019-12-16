@@ -25,7 +25,7 @@ def train():
             print('Reached newest review!')
             break
 
-        pull_request = ReviewedPullRequest(repo.id, pull.number, pull.head)
+        pull_request = ReviewedPullRequest(repo.id, pull.number, repo.full_name, pull.head.sha)
         if pull_request.is_valid:
             for snippet in pull_request.snippets:
                 print('--------------------------------------------------------------------')
@@ -40,7 +40,7 @@ def train():
         if review_count == limit:
             break
 
-    SnippetsTrainer(snippets).train(repo.id, iterations=1, force=False)
+    SnippetsTrainer(snippets).train(repo.id, iterations=20, force=False)
 
 
 train()
@@ -74,10 +74,22 @@ def evaluate(repo_id):
         """
     ]
 
-    tokens = Snippet.tokenize(code)
+    code2 = [
+        """
+        def __eq__(self, other):
+            if isinstance(other, Mapping):
+                other = CaseInsensitiveDict(other)
+            else:
+                return NotImplemented
+            # Compare insensitively
+            return dict(self.lower_items()) == dict(other.lower_items())
+        """
+    ]
+
+    tokens = Snippet.tokenize(code2)
     print(tokens)
 
-    tokens_el = Snippet.tokenize_el(code)
+    tokens_el = Snippet.tokenize_el(code2)
     print(tokens_el)
 
     new_vector = model.infer_vector(tokens)

@@ -4,6 +4,7 @@ from pygments import lex
 from pygments.lexers import PythonLexer
 from pygments.token import Token
 
+from ..chunk import Chunk
 from ..utils import reverse_enum
 
 
@@ -11,24 +12,52 @@ class PythonFileParser(object):
 
     def __init__(self, raw_file):
         self._raw_file = raw_file
-        self.snippets = []
+        self._file_len = None
+        self.chunks = []
+
         self._reset()
-
-    @property
-    def title(self):
-        second_token = self._snippet_body[0][0][1]
-        if second_token.strip() == '':
-            title = self._snippet_body[0][3][1]
-        else:
-            title = self._snippet_body[0][2][1]
-
-        return title
 
     @property
     def f(self):
         # f = open(self.file_path, encoding='utf-8')
         f = self._raw_file.iter_lines(decode_unicode=True)
         return f
+
+    @property
+    def file_len(self):
+        if self._file_len is None:
+            self._file_len = len(list(self.f))
+
+        return self._file_len
+
+    @property
+    def chunk_name(self):
+        if not self._chunk_name:
+            second_token = self._snippet_body[0][0][1]
+            if second_token.strip() == '':
+                self._chunk_name = self._snippet_body[0][3][1]
+            else:
+                self._chunk_name = self._snippet_body[0][2][1]
+
+        return self._chunk_name
+
+    def chunk_start(self, start):
+        if start > 1:
+            return start + 3
+
+        return start
+
+    def chunk_end(self, end):
+        if end < self.file_len:
+            return end - 3
+
+        return end
+
+    def _reset(self):
+        self._chunk_name = ''
+        self._snippet_body = []
+        self._snippet_start = None
+        self._snippet_end = None
 
     def _read(self, start=None):
         for i, line in enumerate(self.f, 1):
@@ -46,11 +75,6 @@ class PythonFileParser(object):
         if all([self._snippet_body, self._snippet_start, self._snippet_end]):
             return True
         return False
-
-    def _reset(self):
-        self._snippet_body = []
-        self._snippet_start = None
-        self._snippet_end = None
 
     def is_func_or_class(self, line_tokens):
         for i, token in enumerate(line_tokens):
@@ -86,7 +110,7 @@ class PythonFileParser(object):
 
             if self.is_func_or_class(line_tokens):
                 if self._is_complete():
-                    self._make_snippet()
+                    self._make_chunk()
                 if stop is not None and i > stop:
                     break
 
@@ -97,9 +121,13 @@ class PythonFileParser(object):
                 self._snippet_end = i
 
         if self._snippet_body:
-            self._make_snippet()
+            self._make_chunk()
+
+        return self.chunks
 
     def parse_single(self, start, stop):
+        start = self.chunk_start(start)
+        stop = self.chunk_end(stop)
         self._snippet_start = start
         self._snippet_end = stop
 
@@ -116,24 +144,6 @@ class PythonFileParser(object):
             else:
                 self._snippet_body.append(line_tokens)
                 self._snippet_end = i
-
-    def _make_snippet(self):
-
-        self._rm_last_line()
-
-        print('----------------')
-        print(self.title)
-        print(self._snippet_start)
-        print(self._snippet_end)
-        print('----------------')
-
-        snippet = []
-        for line_tokens in self._snippet_body:
-            line = ''.join(line[1] for line in line_tokens)
-            snippet.append(line)
-
-        self.snippets.append(snippet)
-        self._reset()
 
     def _rm_last_line(self):
         should_rm = False
@@ -156,3 +166,19 @@ class PythonFileParser(object):
             del self._snippet_body[-1]
             self._snippet_end -= 1
             return self._rm_last_line()
+
+    def _make_chunk(self):
+        self._rm_last_line()
+
+        print('----------------')
+        print(self.chunk_name)
+        print(self._snippet_start)
+        print(self._snippet_end)
+        print('----------------')
+
+        chunk = Chunk(self.chunk_name, self._snippet_body,
+                      self._snippet_start, self._snippet_end)
+
+        self.chunks.append(chunk)
+
+        self._reset()
