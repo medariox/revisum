@@ -44,7 +44,7 @@ class Snippet(Model):
     length = IntegerField()
     source = CharField()
     target = CharField()
-    hunk = BlobField()
+    chunks = BlobField()
 
     class Meta:
         database = db

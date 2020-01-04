@@ -6,11 +6,11 @@ from .database.snippet import maybe_init, Snippet as DataSnippet
 
 class Snippet(object):
 
-    def __init__(self, snippet_id, hunks, source, target):
+    def __init__(self, snippet_id, chunks, source, target):
         self.snippet_id = snippet_id
-        self._hunk = hunks
-        self.start = hunks[0].start
-        self.length = self.total_len(hunks[0].start, hunks[-1].end)
+        self._chunks = chunks
+        self.start = chunks[0].start
+        self.length = self.total_len(chunks[0].start, chunks[-1].end)
         self.source_file = source
         self.target_file = target
 
@@ -20,7 +20,7 @@ class Snippet(object):
         self._source_tokens = []
 
     def __str__(self):
-        return '\n'.join(line for line in self.target_lines())
+        return '\n'.join(self.target_lines())
 
     @staticmethod
     def repo_id(snippet_id):
@@ -31,6 +31,10 @@ class Snippet(object):
         return snippet_id.split('-')[2]
 
     @staticmethod
+    def chunk_no(match_id):
+        return int(match_id.split('-')[0]) - 1
+
+    @staticmethod
     def total_len(start, end):
         length = end - start + 1
         return length
@@ -38,8 +42,8 @@ class Snippet(object):
     def target_lines(self):
         if not self._target_lines:
             # self._normalize_lines('target')
-            for hunk in self._hunk:
-                for line in hunk.lines:
+            for chunk in self._chunks:
+                for line in chunk.lines:
                     self._target_lines.append(line)
 
         return self._target_lines
@@ -58,11 +62,11 @@ class Snippet(object):
     def _normalize_lines(self, origin):
         self._verify_arg(origin)
         if origin == 'target':
-            lines = self._hunk.target_lines()
+            lines = self._chunks.target_lines()
             pre_char = '+'
             destination = self._target_lines
         elif origin == 'source':
-            lines = self._hunk.source_lines()
+            lines = self._chunks.source_lines()
             pre_char = '-'
             destination = self._source_lines
 
@@ -113,10 +117,17 @@ class Snippet(object):
 
         snippet = DataSnippet.get_or_none(snippet_id=snippet_id)
         if snippet:
-            return pickle.loads(snippet.hunk)
+            return pickle.loads(snippet.chunks)
+
+    @classmethod
+    def load_chunk(cls, match_id, path=None):
+        snippet_id = match_id.split('-', 1)[1]
+        chunks = cls.load(snippet_id)
+
+        return chunks[cls.chunk_no(match_id)]
 
     def _serialize(self):
-        return pickle.dumps(self, pickle.HIGHEST_PROTOCOL)
+        return pickle.dumps(self._chunks, pickle.HIGHEST_PROTOCOL)
 
     def save(self):
         repo_id = self.repo_id(self.snippet_id)
@@ -131,7 +142,7 @@ class Snippet(object):
                      length=self.length,
                      source=self.source_file,
                      target=self.target_file,
-                     hunk=self._serialize())
+                     chunks=self._serialize())
              .where(DataSnippet.snippet_id == self.snippet_id)
              .execute())
         else:
@@ -141,4 +152,4 @@ class Snippet(object):
                      length=self.length,
                      source=self.source_file,
                      target=self.target_file,
-                     hunk=self._serialize()))
+                     chunks=self._serialize()))

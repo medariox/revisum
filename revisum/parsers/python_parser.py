@@ -14,6 +14,7 @@ class PythonFileParser(object):
         self._raw_file = raw_file
         self._file_len = None
         self._chunks = []
+        self._chunks_count = 1
 
         self._reset()
 
@@ -179,9 +180,9 @@ class PythonFileParser(object):
         print(self._snippet_end)
         print('----------------')
 
-        chunk = Chunk(self.chunk_name, self._snippet_body,
+        chunk = Chunk(self.chunk_name, self._chunks_count, self._snippet_body,
                       self._snippet_start, self._snippet_end)
-
         self._chunks.append(chunk)
+        self._chunks_count += 1
 
         self._reset()

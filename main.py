@@ -14,7 +14,7 @@ def train():
     pulls = repo.get_pulls(state='all', sort='updated', direction='desc')
 
     review_count = 0
-    limit = 50
+    limit = 5
     snippets = []
 
     newest_review = ValidReview.newest_accepted(repo.id)
@@ -29,7 +29,7 @@ def train():
         if pull_request.is_valid:
             for snippet in pull_request.snippets:
                 print('--------------------------------------------------------------------')
-                print(snippet.target_lines())
+                print(str(snippet))
                 print('--------------------------------------------------------------------')
             snippets += pull_request.snippets
             pull_request.save()
@@ -99,16 +99,24 @@ def evaluate(repo_id):
     print('The 100 most frequent words:')
     print(model.wv.index2entity[:100])
 
-    snippet_id = sims[0][0]
     print('--------------------------------------')
+    match_id = sims[0][0]
     print('For {input} matched {result}!'.format(
-        input=tokens, result=snippet_id))
+        input=tokens, result=match_id))
 
-    matched_code = Snippet.load(snippet_id)
-    print(matched_code)
+    print('--------------------------------------')
+    matched_code = Snippet.load_chunk(match_id)
+    print(str(matched_code))
     matched_tokens = Snippet.tokenize(str(matched_code))
     print(matched_tokens)
 
+    # for chunk in matched_code:
+    #     print(str(chunk))
+    #     matched_tokens = Snippet.tokenize(str(chunk))
+    #     print(matched_tokens)
+
+    print('--------------------------------------')
+    snippet_id = match_id.split('-', 1)[1]
     print('Reason:')
     reviews = ValidReview.load(
         Snippet.pr_number(snippet_id), Snippet.repo_id(snippet_id))

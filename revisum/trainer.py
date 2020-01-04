@@ -60,10 +60,11 @@ class SnippetsTrainer(object):
         tagged_data = []
 
         for snippet in self.snippets:
-            tokenized_snippet = self._to_tokens(snippet)[snippet.snippet_id]
-            tagged_line = TaggedDocument(words=tokenized_snippet,
-                                         tags=[snippet.snippet_id])
-            tagged_data.append(tagged_line)
+            for chunk in snippet._chunks:
+                unique_id = '{0}-{1}'.format(chunk.no, snippet.snippet_id)
+                tagged_line = TaggedDocument(words=chunk.merged_tokens,
+                                             tags=[unique_id])
+                tagged_data.append(tagged_line)
 
         self._tagged_data = tagged_data
 
@@ -86,8 +87,8 @@ class SnippetsTrainer(object):
         maybe_init(repo_id, path=path)
 
         snippets = []
-        for db_snippet in DataSnippet.select(DataSnippet.hunk):
-            snippet = pickle.loads(db_snippet.hunk)
+        for db_snippet in DataSnippet.select(DataSnippet.chunks):
+            snippet = pickle.loads(db_snippet.chunks)
             snippets.append(snippet)
 
         return snippets
