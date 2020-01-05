@@ -64,7 +64,7 @@ class ReviewedPullRequest(object):
 
                 start = hunk.target_start
                 stop = start + hunk.target_length
-                chunks = parser.parse_single(start, stop)
+                chunks = parser.parse_single(start, stop, file_no=file_no)
                 if not chunks:
                     continue
 
@@ -179,6 +179,8 @@ class ReviewedPullRequest(object):
         if self.valid_reviews:
             for snippet in self._snippets:
                 snippet.save()
+                for chunk in snippet._chunks:
+                    chunk.save(snippet.snippet_id)
 
             for valid_review in self._valid_reviews:
                 valid_review.save()

@@ -13,6 +13,7 @@ class PythonFileParser(object):
     def __init__(self, raw_file):
         self._raw_file = raw_file
         self._file_len = None
+        self._file_no = 1
         self._chunks = []
         self._chunks_count = 1
 
@@ -30,6 +31,10 @@ class PythonFileParser(object):
             self._file_len = len(list(self.f))
 
         return self._file_len
+
+    @property
+    def file_no(self):
+        return self._file_no
 
     @property
     def chunk_name(self):
@@ -129,11 +134,14 @@ class PythonFileParser(object):
 
         return chunks
 
-    def parse_single(self, start, stop):
+    def parse_single(self, start, stop, file_no=None):
         start = self.chunk_start(start)
         stop = self.chunk_end(stop)
         self._snippet_start = start
         self._snippet_end = stop
+
+        if file_no is not None:
+            self._file_no = file_no
 
         for i, line in self._read_reverse(start=start):
             line_tokens = list(lex(line, PythonLexer()))
@@ -180,8 +188,10 @@ class PythonFileParser(object):
         print(self._snippet_end)
         print('----------------')
 
-        chunk = Chunk(self.chunk_name, self._chunks_count, self._snippet_body,
-                      self._snippet_start, self._snippet_end)
+        chunk = Chunk(
+            self.chunk_name, self._chunks_count, self.file_no, self._snippet_body,
+            self._snippet_start, self._snippet_end
+        )
         self._chunks.append(chunk)
         self._chunks_count += 1
 

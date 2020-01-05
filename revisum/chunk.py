@@ -1,14 +1,19 @@
+import pickle
+
 from itertools import chain
 
 from .metrics import Metrics
+from .snippet import Snippet
 from .tokenizer import LinesTokenizer
+from .database.chunk import maybe_init, Chunk as DataChunk
 
 
 class Chunk(object):
 
-    def __init__(self, name, no, body, start, end):
+    def __init__(self, name, no, file_no, body, start, end):
         self.name = name
         self.no = no
+        self.file_no = file_no
         self._body = body
         self.start = start
         self.end = end
@@ -55,3 +60,37 @@ class Chunk(object):
         if not self._metrics:
             self._metrics = Metrics(str(self))
         return self._metrics
+
+    def _serialize(self):
+        return pickle.dumps(self._body, pickle.HIGHEST_PROTOCOL)
+
+    def save(self, snippet_id):
+        repo_id = Snippet.repo_id(snippet_id)
+        maybe_init(repo_id, snippet_id)
+
+        chunk_id = '{0}-{1}'.format(self.no, snippet_id)
+        chunk = DataChunk.get_or_none(
+            (DataChunk.start == self.start) &
+            (DataChunk.end == self.end) &
+            (DataChunk.file_no == self.file_no))
+
+        if chunk:
+            (DataChunk
+             .update(chunk_id=chunk_id,
+                     name=self.name,
+                     no=self.no,
+                     file_no=self.file_no,
+                     start=self.start,
+                     end=self.end,
+                     body=self._serialize())
+             .where(DataChunk.chunk_id == chunk.chunk_id)
+             .execute())
+        else:
+            (DataChunk
+             .create(chunk_id=chunk_id,
+                     name=self.name,
+                     no=self.no,
+                     file_no=self.file_no,
+                     start=self.start,
+                     end=self.end,
+                     body=self._serialize()))

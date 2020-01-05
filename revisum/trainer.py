@@ -1,6 +1,8 @@
 import os.path
 import pickle
 
+from collections import OrderedDict
+
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from .utils import get_project_root
 from .database.snippet import maybe_init, Snippet as DataSnippet
@@ -60,9 +62,15 @@ class SnippetsTrainer(object):
         tagged_data = []
 
         for snippet in self.snippets:
+
+            chunks = OrderedDict()
             for chunk in snippet._chunks:
-                unique_id = '{0}-{1}'.format(chunk.no, snippet.snippet_id)
-                tagged_line = TaggedDocument(words=chunk.merged_tokens,
+                non_unique_id = '{0}-{1}-{2}'.format(chunk.file_no, chunk.start, chunk.end)
+                chunks[non_unique_id] = chunk
+
+            for unique_chunk in chunks.values():
+                unique_id = '{0}-{1}'.format(unique_chunk.no, snippet.snippet_id)
+                tagged_line = TaggedDocument(words=unique_chunk.merged_tokens,
                                              tags=[unique_id])
                 tagged_data.append(tagged_line)
 
