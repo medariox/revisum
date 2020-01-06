@@ -16,13 +16,11 @@ from peewee import (
 db = SqliteDatabase(None)
 
 
-def maybe_init(repo_id, snippet_id):
+def maybe_init(pr_number, repo_id):
     path = get_project_root()
     db_dir = os.path.join(path, 'data', str(repo_id), 'chunks')
     if not os.path.isdir(db_dir):
         os.makedirs(db_dir)
-
-    pr_number = Snippet.pr_number(snippet_id)
 
     name = '{0}-{1}'.format(pr_number, repo_id)
     db_name = name + '.db'
@@ -45,10 +43,11 @@ def create():
 
 class Chunk(Model):
 
-    chunk_id = CharField()
+    pr_id = CharField()
+    b64_hash = CharField()
     name = CharField()
     no = IntegerField()
-    file_no = IntegerField()
+    file_path = CharField()
     start = IntegerField()
     end = IntegerField()
     body = BlobField()

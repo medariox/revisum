@@ -65,13 +65,11 @@ class SnippetsTrainer(object):
 
             chunks = OrderedDict()
             for chunk in snippet._chunks:
-                non_unique_id = '{0}-{1}-{2}'.format(chunk.file_no, chunk.start, chunk.end)
-                chunks[non_unique_id] = chunk
+                chunks[chunk.b64_hash] = chunk
 
-            for unique_chunk in chunks.values():
-                unique_id = '{0}-{1}'.format(unique_chunk.no, snippet.snippet_id)
+            for b64_hash, unique_chunk in chunks.items():
                 tagged_line = TaggedDocument(words=unique_chunk.merged_tokens,
-                                             tags=[unique_id])
+                                             tags=[b64_hash])
                 tagged_data.append(tagged_line)
 
         self._tagged_data = tagged_data
@@ -85,7 +83,7 @@ class SnippetsTrainer(object):
         """
         snippet_lines = []
         # Only use target snippets for now
-        for line in snippet.as_tokens('target'):
+        for line in snippet.to_tokens('target'):
             snippet_lines += line
 
         return {snippet.snippet_id: snippet_lines}

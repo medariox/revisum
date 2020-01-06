@@ -41,9 +41,10 @@ other_code = [
     """
 ]
 
+
 def evaluate():
 
-    tokens = Snippet.tokenize(other_code)
+    tokens = Snippet.as_tokens(other_code)
 
     for test_dir in os.listdir(tests_data):
 
@@ -71,13 +72,13 @@ def evaluate():
 
         print('\n')
         print(tokens)
-        tokens_el = Snippet.tokenize_el(tokens)
+        tokens_el = Snippet.as_elements(tokens)
         print(tokens_el)
 
         matched_code = Snippet.load(sims[0][0], path=os.path.join(tests_data, test_dir))
-        matched_tokens = Snippet.tokenize(str(matched_code))
+        matched_tokens = Snippet.as_tokens(str(matched_code))
         print(matched_tokens)
-        tokens_el = Snippet.tokenize_el(matched_tokens)
+        tokens_el = Snippet.as_elements(matched_tokens)
         print(tokens_el)
         print('\n')
         print(sims)

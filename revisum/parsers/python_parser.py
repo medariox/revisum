@@ -5,15 +5,16 @@ from pygments.lexers import PythonLexer
 from pygments.token import Token
 
 from ..chunk import Chunk
-from ..utils import reverse_enum
+from ..utils import reverse_enum, norm_path
 
 
 class PythonFileParser(object):
 
-    def __init__(self, raw_file):
+    def __init__(self, pr_id, file_path, raw_file=None):
+        self.pr_id = pr_id
         self._raw_file = raw_file
+        self._file_path = str(file_path)
         self._file_len = None
-        self._file_no = 1
         self._chunks = []
         self._chunks_count = 1
 
@@ -21,8 +22,11 @@ class PythonFileParser(object):
 
     @property
     def f(self):
-        # f = open(self.file_path, encoding='utf-8')
-        f = self._raw_file.iter_lines(decode_unicode=True)
+        if self._raw_file:
+            f = self._raw_file.iter_lines(decode_unicode=True)
+        else:
+            f = open(self._file_path, encoding='utf-8')
+
         return f
 
     @property
@@ -33,8 +37,8 @@ class PythonFileParser(object):
         return self._file_len
 
     @property
-    def file_no(self):
-        return self._file_no
+    def file_path(self):
+        return norm_path(self._file_path)
 
     @property
     def chunk_name(self):
@@ -134,14 +138,11 @@ class PythonFileParser(object):
 
         return chunks
 
-    def parse_single(self, start, stop, file_no=None):
+    def parse_single(self, start, stop):
         start = self.chunk_start(start)
         stop = self.chunk_end(stop)
         self._snippet_start = start
         self._snippet_end = stop
-
-        if file_no is not None:
-            self._file_no = file_no
 
         for i, line in self._read_reverse(start=start):
             line_tokens = list(lex(line, PythonLexer()))
@@ -189,8 +190,8 @@ class PythonFileParser(object):
         print('----------------')
 
         chunk = Chunk(
-            self.chunk_name, self._chunks_count, self.file_no, self._snippet_body,
-            self._snippet_start, self._snippet_end
+            self.pr_id, self.chunk_name, self._chunks_count, self.file_path,
+            self._snippet_body, self._snippet_start, self._snippet_end
         )
         self._chunks.append(chunk)
         self._chunks_count += 1

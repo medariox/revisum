@@ -76,7 +76,7 @@ class Snippet(object):
                 single_line = single_line.replace(pre_char, ' ', 1)
             destination.append(single_line)
 
-    def as_tokens(self, origin):
+    def to_tokens(self, origin):
         self._verify_arg(origin)
         if origin == 'target':
             lines = self.target_lines()
@@ -86,7 +86,7 @@ class Snippet(object):
         return LinesTokenizer(lines).tokens
 
     @classmethod
-    def tokenize(cls, code):
+    def as_tokens(cls, code):
         if not isinstance(code, list):
             code = [code]
 
@@ -98,7 +98,7 @@ class Snippet(object):
         return lines
 
     @classmethod
-    def tokenize_el(cls, code):
+    def as_elements(cls, code):
         if not isinstance(code, list):
             code = [code]
 
@@ -118,13 +118,6 @@ class Snippet(object):
         snippet = DataSnippet.get_or_none(snippet_id=snippet_id)
         if snippet:
             return pickle.loads(snippet.chunks)
-
-    @classmethod
-    def load_chunk(cls, match_id, path=None):
-        snippet_id = match_id.split('-', 1)[1]
-        chunks = cls.load(snippet_id)
-
-        return chunks[cls.chunk_no(match_id)]
 
     def _serialize(self):
         return pickle.dumps(self._chunks, pickle.HIGHEST_PROTOCOL)

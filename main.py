@@ -1,16 +1,22 @@
 import os.path
 
+from pathlib import Path
+
 from gensim.models.doc2vec import Doc2Vec
 
+from revisum.chunk import Chunk
 from revisum.pull_request import ReviewedPullRequest
 from revisum.review import ValidReview
 from revisum.snippet import Snippet
 from revisum.trainer import SnippetsTrainer
 from revisum.utils import get_project_root, gh_session
+from revisum.parsers.python_parser import PythonFileParser
+
+
+repo = gh_session().get_repo('psf/requests')
 
 
 def train():
-    repo = gh_session().get_repo('psf/requests')
     pulls = repo.get_pulls(state='all', sort='updated', direction='desc')
 
     review_count = 0
@@ -44,6 +50,35 @@ def train():
 
 
 train()
+
+
+def first_run(repo_id):
+    cur_path = get_project_root()
+    path = Path(os.path.join(cur_path, 'tmp'))
+
+    snippets = []
+
+    files = list(path.rglob('*.py'))
+    print(files)
+    for i, f in enumerate(files, 1):
+        parser = PythonFileParser('0-' + str(repo_id), f)
+        chunks = parser.parse()
+        if not chunks:
+            continue
+
+        snippet_id = '-'.join([str(0), str(i), str(0), str(repo_id)])
+        snippet = Snippet(snippet_id, chunks, str(f), str(f))
+        snippets.append(snippet)
+
+    for snippet in snippets:
+        snippet.save()
+        for chunk in snippet._chunks:
+            chunk.save(str(0), repo_id)
+
+    SnippetsTrainer(snippets).train(repo_id, iterations=20, force=False)
+
+
+first_run(repo.id)
 
 
 def evaluate(repo_id):
@@ -86,11 +121,11 @@ def evaluate(repo_id):
         """
     ]
 
-    tokens = Snippet.tokenize(code2)
+    tokens = Snippet.as_tokens(code2)
     print(tokens)
 
-    tokens_el = Snippet.tokenize_el(code2)
-    print(tokens_el)
+    elements = Snippet.as_elements(code2)
+    print(elements)
 
     new_vector = model.infer_vector(tokens)
     sims = model.docvecs.most_similar([new_vector])
@@ -105,21 +140,20 @@ def evaluate(repo_id):
         input=tokens, result=match_id))
 
     print('--------------------------------------')
-    matched_code = Snippet.load_chunk(match_id)
-    print(str(matched_code))
-    matched_tokens = Snippet.tokenize(str(matched_code))
-    print(matched_tokens)
+    matched_code = Chunk.load(match_id)
+    print(Chunk.as_text(matched_code, pretty=True))
+
+    print(Chunk.as_tokens(matched_code))
 
     # for chunk in matched_code:
     #     print(str(chunk))
-    #     matched_tokens = Snippet.tokenize(str(chunk))
+    #     matched_tokens = Snippet.as_tokens(str(chunk))
     #     print(matched_tokens)
 
     print('--------------------------------------')
-    snippet_id = match_id.split('-', 1)[1]
+    pr_number, repo_id = Chunk.pr_id_from_hash(match_id)
     print('Reason:')
-    reviews = ValidReview.load(
-        Snippet.pr_number(snippet_id), Snippet.repo_id(snippet_id))
+    reviews = ValidReview.load(pr_number, repo_id)
     for review in reviews:
         print('Rating:')
         print(review.rating)

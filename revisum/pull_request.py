@@ -4,7 +4,7 @@ from unidiff import PatchSet
 
 from .snippet import Snippet
 from .review import ValidReview
-from .utils import gh_session
+from .utils import gh_session, norm_path
 from .parsers.python_parser import PythonFileParser
 
 
@@ -33,6 +33,10 @@ class ReviewedPullRequest(object):
     def is_valid(self):
         return self.has_valid_review() and self.has_valid_snippet()
 
+    @property
+    def pr_id(self):
+        return str(self.number) + '-' + str(self.repo_id)
+
     def change_url(self, path):
         url = 'https://raw.githubusercontent.com/{0}/{1}/{2}'.format(
             self.repo_name, self.head_sha, path
@@ -55,16 +59,17 @@ class ReviewedPullRequest(object):
             if not self._is_supported(change.target_file):
                 continue
 
-            snippet_url = self.change_url(change.path)
+            normed_path = norm_path(change.target_file)
+            snippet_url = self.change_url(normed_path)
             raw_snippet = requests.get(snippet_url)
             if raw_snippet:
-                parser = PythonFileParser(raw_snippet)
+                parser = PythonFileParser(self.pr_id, normed_path, raw_snippet)
 
             for hunk_no, hunk in enumerate(change, 1):
 
                 start = hunk.target_start
                 stop = start + hunk.target_length
-                chunks = parser.parse_single(start, stop, file_no=file_no)
+                chunks = parser.parse_single(start, stop)
                 if not chunks:
                     continue
 
@@ -180,7 +185,7 @@ class ReviewedPullRequest(object):
             for snippet in self._snippets:
                 snippet.save()
                 for chunk in snippet._chunks:
-                    chunk.save(snippet.snippet_id)
+                    chunk.save(self.number, self.repo_id)
 
             for valid_review in self._valid_reviews:
                 valid_review.save()
