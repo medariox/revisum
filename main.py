@@ -59,21 +59,20 @@ def first_run(repo_id):
     snippets = []
 
     files = list(path.rglob('*.py'))
-    print(files)
-    for i, f in enumerate(files, 1):
-        parser = PythonFileParser('0-' + str(repo_id), f)
-        chunks = parser.parse()
+    for file_no, f in enumerate(files, 1):
+        parser = PythonFileParser(0, repo_id, f)
+        chunks = parser.parse(file_no=file_no)
         if not chunks:
             continue
 
-        snippet_id = '-'.join([str(0), str(i), str(0), str(repo_id)])
+        snippet_id = Snippet.make_id(0, file_no, 0, repo_id)
         snippet = Snippet(snippet_id, chunks, str(f), str(f))
         snippets.append(snippet)
 
     for snippet in snippets:
         snippet.save()
         for chunk in snippet._chunks:
-            chunk.save(str(0), repo_id)
+            chunk.save(0, repo_id)
 
     SnippetsTrainer(snippets).train(repo_id, iterations=20, force=False)
 
@@ -142,13 +141,13 @@ def evaluate(repo_id):
     print('--------------------------------------')
     matched_code = Chunk.load(match_id)
     print(Chunk.as_text(matched_code, pretty=True))
-
     print(Chunk.as_tokens(matched_code))
 
-    # for chunk in matched_code:
-    #     print(str(chunk))
-    #     matched_tokens = Snippet.as_tokens(str(chunk))
-    #     print(matched_tokens)
+    print('--------------------------------------')
+    snippet_id = Chunk.load_snippet_id(match_id)
+    chunks = Snippet.load(snippet_id)
+    for chunk in chunks:
+        print(str(chunk))
 
     print('--------------------------------------')
     pr_number, repo_id = Chunk.pr_id_from_hash(match_id)

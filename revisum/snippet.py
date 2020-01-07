@@ -30,9 +30,10 @@ class Snippet(object):
     def pr_number(snippet_id):
         return snippet_id.split('-')[2]
 
-    @staticmethod
-    def chunk_no(match_id):
-        return int(match_id.split('-')[0]) - 1
+    @classmethod
+    def make_id(cls, hunk_no, file_no, pr_number, repo_id):
+        return '-'.join([str(hunk_no), str(file_no),
+                         str(pr_number), str(repo_id)])
 
     @staticmethod
     def total_len(start, end):

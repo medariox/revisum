@@ -33,10 +33,6 @@ class ReviewedPullRequest(object):
     def is_valid(self):
         return self.has_valid_review() and self.has_valid_snippet()
 
-    @property
-    def pr_id(self):
-        return str(self.number) + '-' + str(self.repo_id)
-
     def change_url(self, path):
         url = 'https://raw.githubusercontent.com/{0}/{1}/{2}'.format(
             self.repo_name, self.head_sha, path
@@ -63,17 +59,17 @@ class ReviewedPullRequest(object):
             snippet_url = self.change_url(normed_path)
             raw_snippet = requests.get(snippet_url)
             if raw_snippet:
-                parser = PythonFileParser(self.pr_id, normed_path, raw_snippet)
+                parser = PythonFileParser(self.number, self.repo_id, normed_path, raw_snippet)
 
             for hunk_no, hunk in enumerate(change, 1):
 
                 start = hunk.target_start
                 stop = start + hunk.target_length
-                chunks = parser.parse_single(start, stop)
+                chunks = parser.parse_single(hunk_no, file_no, start, stop)
                 if not chunks:
                     continue
 
-                snippet_id = '-'.join([str(hunk_no), str(file_no), str(self.number), str(self.repo_id)])
+                snippet_id = Snippet.make_id(hunk_no, file_no, self.number, self.repo_id)
                 snippet = Snippet(snippet_id, chunks, change.source_file, change.target_file)
                 self._snippets.append(snippet)
 

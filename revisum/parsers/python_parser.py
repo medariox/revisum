@@ -1,17 +1,17 @@
-import io
-
 from pygments import lex
 from pygments.lexers import PythonLexer
 from pygments.token import Token
 
 from ..chunk import Chunk
+from ..snippet import Snippet
 from ..utils import reverse_enum, norm_path
 
 
 class PythonFileParser(object):
 
-    def __init__(self, pr_id, file_path, raw_file=None):
-        self.pr_id = pr_id
+    def __init__(self, pr_number, repo_id, file_path, raw_file=None):
+        self.pr_number = pr_number
+        self.repo_id = repo_id
         self._raw_file = raw_file
         self._file_path = str(file_path)
         self._file_len = None
@@ -51,6 +51,11 @@ class PythonFileParser(object):
 
         return self._chunk_name
 
+    @property
+    def snippet_id(self):
+        return Snippet.make_id(self._hunk_no, self._file_no,
+                               self.pr_number, self.repo_id)
+
     def chunk_start(self, start):
         if start > 1:
             return start + 3
@@ -63,11 +68,14 @@ class PythonFileParser(object):
 
         return end
 
-    def _reset(self):
+    def _reset(self, soft=False):
         self._chunk_name = ''
         self._snippet_body = []
         self._snippet_start = None
         self._snippet_end = None
+        if not soft:
+            self._hunk_no = 0
+            self._file_no = 0
 
     def _read(self, start=None):
         for i, line in enumerate(self.f, 1):
@@ -114,7 +122,10 @@ class PythonFileParser(object):
 
                 return True
 
-    def parse(self, start=None, stop=None):
+    def parse(self, file_no=None, start=None, stop=None):
+        if file_no:
+            self._file_no = file_no
+
         for i, line in self._read(start=start):
             line_tokens = list(lex(line, PythonLexer()))
 
@@ -138,9 +149,12 @@ class PythonFileParser(object):
 
         return chunks
 
-    def parse_single(self, start, stop):
+    def parse_single(self, hunk_no, file_no, start, stop):
         start = self.chunk_start(start)
         stop = self.chunk_end(stop)
+
+        self._hunk_no = hunk_no
+        self._file_no = file_no
         self._snippet_start = start
         self._snippet_end = stop
 
@@ -152,7 +166,7 @@ class PythonFileParser(object):
                 self._snippet_start = i
 
                 if self._is_complete():
-                    self._reset()
+                    self._reset(soft=True)
                     return self.parse(start=i, stop=stop)
             else:
                 self._snippet_body.append(line_tokens)
@@ -190,10 +204,10 @@ class PythonFileParser(object):
         print('----------------')
 
         chunk = Chunk(
-            self.pr_id, self.chunk_name, self._chunks_count, self.file_path,
+            self.snippet_id, self.chunk_name, self._chunks_count, self.file_path,
             self._snippet_body, self._snippet_start, self._snippet_end
         )
         self._chunks.append(chunk)
         self._chunks_count += 1
 
-        self._reset()
+        self._reset(soft=True)

@@ -11,8 +11,8 @@ from .database.chunk import maybe_init, Chunk as DataChunk
 
 class Chunk(object):
 
-    def __init__(self, pr_id, name, no, file_path, body, start, end):
-        self.pr_id = pr_id
+    def __init__(self, snippet_id, name, no, file_path, body, start, end):
+        self.snippet_id = snippet_id
         self.name = name
         self.no = no
         self.file_path = file_path
@@ -41,6 +41,10 @@ class Chunk(object):
         if not self._tokens:
             self._to_tokens()
         return self._tokens
+
+    @property
+    def pr_id(self):
+        return self.snippet_id.split('-', 2)[2]
 
     @property
     def b64_hash(self):
@@ -84,6 +88,15 @@ class Chunk(object):
             return pickle.loads(chunk.body)
 
     @classmethod
+    def load_snippet_id(cls, b64_hash):
+        pr_number, repo_id = cls.pr_id_from_hash(b64_hash)
+        maybe_init(pr_number, repo_id)
+
+        chunk = DataChunk.get_or_none(b64_hash=b64_hash)
+        if chunk:
+            return chunk.snippet_id
+
+    @classmethod
     def as_text(cls, body, pretty=False):
         lines = []
         for line_tokens in body:
@@ -120,7 +133,7 @@ class Chunk(object):
         chunk = DataChunk.get_or_none(b64_hash=self.b64_hash)
         if chunk:
             (DataChunk
-             .update(pr_id=self.pr_id,
+             .update(snippet_id=self.snippet_id,
                      b64_hash=self.b64_hash,
                      name=self.name,
                      no=self.no,
@@ -132,7 +145,7 @@ class Chunk(object):
              .execute())
         else:
             (DataChunk
-             .create(pr_id=self.pr_id,
+             .create(snippet_id=self.snippet_id,
                      b64_hash=self.b64_hash,
                      name=self.name,
                      no=self.no,
