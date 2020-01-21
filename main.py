@@ -12,7 +12,6 @@ from revisum.trainer import SnippetsTrainer
 from revisum.utils import get_project_root, gh_session
 from revisum.parsers.python_parser import PythonFileParser
 
-
 repo = gh_session().get_repo('psf/requests')
 
 
@@ -41,8 +40,7 @@ def train():
             pull_request.save()
             review_count += 1
 
-            print('Total reviews: [{count}/{limit}]'.format(count=review_count,
-                                                            limit=limit))
+            print('Total reviews: [{count}/{limit}]'.format(count=review_count, limit=limit))
         if review_count == limit:
             break
 
@@ -85,18 +83,6 @@ def evaluate(repo_id):
     model_path = os.path.join(path, 'data', str(repo_id), 'd2v.model')
     model = Doc2Vec.load(model_path)
 
-    old_code = [
-        'try:', 'return complexjson.loads(self.text, **kwargs)',
-        'except JSONDecodeError:',
-        "print('Response content is not in the json format')"
-    ]
-
-    min_code = [
-        """
-        from .modular_Exponential import *
-        """
-    ]
-
     code = [
         """
         def normalize_percent_encode(x):
@@ -135,8 +121,7 @@ def evaluate(repo_id):
 
     print('--------------------------------------')
     match_id = sims[0][0]
-    print('For {input} matched {result}!'.format(
-        input=tokens, result=match_id))
+    print('For {input} matched {result}!'.format(input=tokens, result=match_id))
 
     print('--------------------------------------')
     matched_code = Chunk.load(match_id)
