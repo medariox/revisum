@@ -5,7 +5,7 @@ from pathlib import Path
 from gensim.models.doc2vec import Doc2Vec
 
 from revisum.chunk import Chunk
-from revisum.pull_request import ReviewedPullRequest
+from revisum.pull_request import PullRequest
 from revisum.review import ValidReview
 from revisum.snippet import Snippet
 from revisum.trainer import SnippetsTrainer
@@ -30,7 +30,7 @@ def train():
             print('Reached newest review!')
             break
 
-        pull_request = ReviewedPullRequest(repo.id, pull.number, repo.full_name, pull.head.sha)
+        pull_request = PullRequest(repo.id, pull.number, repo.full_name, pull.head.sha)
         if pull_request.is_valid:
             for snippet in pull_request.snippets:
                 print('--------------------------------------------------------------------')

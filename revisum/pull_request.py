@@ -8,7 +8,7 @@ from .utils import gh_session, norm_path
 from .parsers.python_parser import PythonFileParser
 
 
-class ReviewedPullRequest(object):
+class PullRequest(object):
     ignored_bots = ['codecov-io', 'renovate[bot]', 'deepcode[bot]',
                     'coveralls']
 
@@ -164,7 +164,7 @@ class ReviewedPullRequest(object):
             com_len = comments.totalCount
             if com_len > 0:
                 # Skip comments that were made by these bots
-                ignored_bots = ReviewedPullRequest.ignored_bots
+                ignored_bots = PullRequest.ignored_bots
                 for comment in comments:
                     if comment.user.login in ignored_bots:
                         continue
