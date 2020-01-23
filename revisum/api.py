@@ -4,7 +4,7 @@ import requests
 from .pull_request import PullRequest
 from .trainer import SnippetsTrainer
 from .snippet import Snippet
-from .review import ValidReview
+from .review import Review
 from .utils import gh_session
 
 
@@ -13,8 +13,8 @@ def retrieve(snippet_id: hug.types.text):
     snippet = Snippet.load(snippet_id)
 
     if snippet:
-        reviews = ValidReview.load(Snippet.pr_number(snippet_id),
-                                   Snippet.repo_id(snippet_id))
+        reviews = Review.load(Snippet.pr_number(snippet_id),
+                              Snippet.repo_id(snippet_id))
 
         revs = [{'rating': review.rating, 'body': review.body}
                 for review in reviews]

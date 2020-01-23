@@ -1,7 +1,7 @@
-from .database.review import Review, maybe_init
+from .database.review import Review as DataReview, maybe_init
 
 
-class ValidReview(object):
+class Review(object):
 
     def __init__(self, repo_id, pr_number, pr_merged, comment, state=None):
         self.repo_id = repo_id
@@ -26,9 +26,9 @@ class ValidReview(object):
     def load(cls, pr_number, repo_id):
         maybe_init(repo_id)
 
-        review = Review.select().where(
-            (Review.pr_number == pr_number) &
-            (Review.repo_id == repo_id))
+        review = DataReview.select().where(
+            (DataReview.pr_number == pr_number) &
+            (DataReview.repo_id == repo_id))
 
         if review:
             return review
@@ -39,10 +39,10 @@ class ValidReview(object):
     def newest_accepted(cls, repo_id):
         maybe_init(repo_id)
 
-        review = (Review.select(Review.pr_number).where(
-            (Review.repo_id == repo_id) &
-            (Review.state.in_(['APPROVED', 'CLOSED'])))
-            .order_by(Review.pr_number.desc())
+        review = (DataReview.select(DataReview.pr_number).where(
+            (DataReview.repo_id == repo_id) &
+            (DataReview.state.in_(['APPROVED', 'CLOSED'])))
+            .order_by(DataReview.pr_number.desc())
             .first())
 
         if review:
@@ -51,9 +51,9 @@ class ValidReview(object):
     def save(self):
         maybe_init(self.repo_id)
 
-        review = Review.get_or_none(comment_id=self.comment_id)
+        review = DataReview.get_or_none(comment_id=self.comment_id)
         if review:
-            (Review
+            (DataReview
              .update(comment_id=self.comment_id,
                      pr_number=self.pr_number,
                      pr_merged=self.pr_merged,
@@ -63,10 +63,10 @@ class ValidReview(object):
                      user_id=self.user_id,
                      user_login=self.user_login,
                      body=self.body)
-             .where(Review.comment_id == self.comment_id)
+             .where(DataReview.comment_id == self.comment_id)
              .execute())
         else:
-            (Review
+            (DataReview
              .create(comment_id=self.comment_id,
                      pr_number=self.pr_number,
                      pr_merged=self.pr_merged,

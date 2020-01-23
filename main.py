@@ -6,7 +6,7 @@ from gensim.models.doc2vec import Doc2Vec
 
 from revisum.chunk import Chunk
 from revisum.pull_request import PullRequest
-from revisum.review import ValidReview
+from revisum.review import Review
 from revisum.snippet import Snippet
 from revisum.trainer import SnippetsTrainer
 from revisum.utils import get_project_root, gh_session
@@ -22,7 +22,7 @@ def train():
     limit = 50
     snippets = []
 
-    newest_review = ValidReview.newest_accepted(repo.id)
+    newest_review = Review.newest_accepted(repo.id)
 
     for pull in pulls:
 
@@ -137,7 +137,7 @@ def evaluate(repo_id):
     print('--------------------------------------')
     pr_number, repo_id = Chunk.pr_id_from_hash(match_id)
     print('Reason:')
-    reviews = ValidReview.load(pr_number, repo_id)
+    reviews = Review.load(pr_number, repo_id)
     for review in reviews:
         print('Rating:')
         print(review.rating)

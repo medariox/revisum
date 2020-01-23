@@ -3,7 +3,7 @@ import requests
 from unidiff import PatchSet
 
 from .snippet import Snippet
-from .review import ValidReview
+from .review import Review
 from .utils import gh_session, norm_path
 from .parsers.python_parser import PythonFileParser
 
@@ -139,8 +139,8 @@ class PullRequest(object):
             for comment in reviews:
                 if comment.body != '':
                     self._valid_reviews.append(
-                        ValidReview(self.repo_id, self.number,
-                                    self.merged, comment)
+                        Review(self.repo_id, self.number,
+                               self.merged, comment)
                     )
 
         if not self._valid_reviews and not self._closed_with_comment():
@@ -169,8 +169,8 @@ class PullRequest(object):
                     if comment.user.login in ignored_bots:
                         continue
                     self._valid_reviews.append(
-                        ValidReview(self.repo_id, self.number, self.merged,
-                                    comment, state='CLOSED')
+                        Review(self.repo_id, self.number, self.merged,
+                               comment, state='CLOSED')
                     )
                 return True
 
