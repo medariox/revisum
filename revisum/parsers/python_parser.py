@@ -2,7 +2,7 @@ from pygments import lex
 from pygments.lexers import PythonLexer
 from pygments.token import Token
 
-from ..chunk import Chunk
+from ..chunk import Chunk, ChunkException
 from ..snippet import Snippet
 from ..utils import reverse_enum, norm_path
 
@@ -203,11 +203,15 @@ class PythonFileParser(object):
         print(self._snippet_end)
         print('----------------')
 
-        chunk = Chunk(
-            self.snippet_id, self.chunk_name, self._chunks_count, self.file_path,
-            self._snippet_body, self._snippet_start, self._snippet_end
-        )
-        self._chunks.append(chunk)
-        self._chunks_count += 1
+        try:
+            chunk = Chunk(
+                self.snippet_id, self.chunk_name, self._chunks_count, self.file_path,
+                self._snippet_body, self._snippet_start, self._snippet_end
+            )
+
+            self._chunks.append(chunk)
+            self._chunks_count += 1
+        except ChunkException as e:
+            print('Skipping invalid chunk: {0}, {1}\n{2}'.format(self.snippet_id, self.chunk_name, e))
 
         self._reset(soft=True)

@@ -61,6 +61,7 @@ class Chunk(Model):
     end = IntegerField()
     body = BlobField()
     sloc = IntegerField()
+    complexity = IntegerField()
 
     class Meta:
         database = db

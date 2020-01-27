@@ -153,7 +153,6 @@ class SnippetsTrainer(object):
                      model_path=model_path)
 
         metrics = Metrics(repo_id)
-        print(metrics.risk_profile('sloc', 'med'))
         metrics.save()
 
     def iterate(self, times, **kwargs):

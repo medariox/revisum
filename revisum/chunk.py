@@ -1,12 +1,16 @@
 import functools
 import pickle
-
 from itertools import chain
+from textwrap import dedent
 
-from .metrics import Metrics
+from .metrics import Metrics, MetricsException
 from .tokenizer import LinesTokenizer
 from .utils import b64_decode, b64_encode
 from .database.chunk import maybe_init, Chunk as DataChunk
+
+
+class ChunkException(Exception):
+    pass
 
 
 class Chunk(object):
@@ -25,8 +29,10 @@ class Chunk(object):
         self._metrics = None
         self._encoded_b64_hash = None
 
+        self.metrics
+
     def __str__(self):
-        return '\n'.join(self.lines)
+        return dedent('\n'.join(self.lines))
 
     @property
     def lines(self):
@@ -61,7 +67,10 @@ class Chunk(object):
     @property
     def metrics(self):
         if not self._metrics:
-            self._metrics = Metrics(self.repo_id, code=str(self))
+            try:
+                self._metrics = Metrics(self.repo_id, code=str(self))
+            except MetricsException as e:
+                raise ChunkException(e)
         return self._metrics
 
     @property
@@ -143,7 +152,8 @@ class Chunk(object):
                      start=self.start,
                      end=self.end,
                      body=self._serialize(),
-                     sloc=self.metrics.sloc)
+                     sloc=self.metrics.sloc,
+                     complexity=self.metrics.complexity)
              .where(DataChunk.b64_hash == chunk.b64_hash)
              .execute())
         else:
@@ -156,4 +166,5 @@ class Chunk(object):
                      start=self.start,
                      end=self.end,
                      body=self._serialize(),
-                     sloc=self.metrics.sloc))
+                     sloc=self.metrics.sloc,
+                     complexity=self.metrics.complexity))

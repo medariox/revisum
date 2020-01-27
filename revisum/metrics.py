@@ -1,12 +1,18 @@
 import os
+from ast import parse
 from pathlib import Path
 
+from radon.complexity import cc_visit_ast
 from radon.raw import analyze
 from sortedcontainers import SortedList
 
 from .database.chunk import init, Chunk as DataChunk
 from .database.metrics import maybe_init, Metrics as DataMetrics
 from .utils import get_project_root
+
+
+class MetricsException(Exception):
+    pass
 
 
 class Metrics(object):
@@ -16,15 +22,48 @@ class Metrics(object):
         self._code = code
         self._db_data = {}
 
-        self._metrics = ['sloc']
+        self._metrics = ['sloc', 'complexity']
         self._thresholds = {'low': 1, 'med': 2, 'high': 3, 'very_high': 4}
 
-        if code:
-            self.compute()
+        self._sloc = 0
+        self._complexity = 0
+        self._ast_node = None
 
-    def compute(self):
-        result = analyze(self._code)
-        self.sloc = result.sloc
+        if code:
+            self.sloc
+            self.complexity
+
+    @property
+    def sloc(self):
+        if not self._sloc:
+            try:
+                raw = analyze(self._code)
+                self._sloc = raw.sloc
+            except SyntaxError as e:
+                raise MetricsException('Error while computing Sloc:\n{0!r}'.format(e))
+
+        return self._sloc
+
+    @property
+    def complexity(self):
+        if not self._complexity:
+            comp = cc_visit_ast(self.ast_node)
+            if not comp:
+                raise MetricsException('Error while computing Complexity: no result')
+            else:
+                self._complexity = sum(c.complexity for c in comp)
+
+        return self._complexity
+
+    @property
+    def ast_node(self):
+        if not self._ast_node:
+            try:
+                self._ast_node = parse(self._code)
+            except SyntaxError as e:
+                raise MetricsException('Error while computing Ast:\n{0!r}'.format(e))
+
+        return self._ast_node
 
     def risk_profile(self, metric, threshold):
         if not self._db_data:
@@ -47,9 +86,9 @@ class Metrics(object):
             data = DataChunk.select()
             for metric in self._metrics:
                 if not db_metrics.get(metric):
-                    db_metrics[metric] = SortedList(a.sloc for a in data)
+                    db_metrics[metric] = SortedList(getattr(a, metric) for a in data)
                 else:
-                    db_metrics[metric].update(a.sloc for a in data)
+                    db_metrics[metric].update(getattr(a, metric) for a in data)
 
         self._db_data = db_metrics
 
