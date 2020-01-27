@@ -12,7 +12,7 @@ from .utils import get_project_root
 class Metrics(object):
 
     def __init__(self, repo_id, code=None):
-        self.repo_id = str(repo_id)
+        self.repo_id = repo_id
         self._code = code
         self._db_data = {}
 
@@ -27,23 +27,23 @@ class Metrics(object):
         self.sloc = result.sloc
 
     def risk_profile(self, metric, threshold):
-        if not self._db_data and self.repo_id is not None:
-            self.from_chunks(self.repo_id)
+        if not self._db_data:
+            self.from_chunks()
 
         if metric in self._metrics and threshold in self._thresholds:
             metric_len = len(self._db_data[metric])
             th = metric_len / 5 * self._thresholds[threshold]
             return self._db_data[metric][int(th) - 1]
 
-    def from_chunks(self, repo_id):
+    def from_chunks(self):
         cur_path = get_project_root()
-        path = Path(os.path.join(cur_path, 'data', str(repo_id), 'chunks'))
+        path = Path(os.path.join(cur_path, 'data', str(self.repo_id), 'chunks'))
 
         db_metrics = {}
         files = list(path.rglob('*.db'))
 
         for f in files:
-            init(str(f))
+            init(f)
             data = DataChunk.select()
             for metric in self._metrics:
                 if not db_metrics.get(metric):

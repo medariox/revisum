@@ -15,7 +15,7 @@ db = SqliteDatabase(None)
 
 
 def init(db_path):
-    db.init(db_path, pragmas={
+    db.init(str(db_path), pragmas={
         'journal_mode': 'wal',
         'cache_size': -1 * 64000,  # 64MB
         'foreign_keys': 1,
