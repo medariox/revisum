@@ -14,6 +14,15 @@ from peewee import (
 db = SqliteDatabase(None)
 
 
+def init(db_path):
+    db.init(db_path, pragmas={
+        'journal_mode': 'wal',
+        'cache_size': -1 * 64000,  # 64MB
+        'foreign_keys': 1,
+        'ignore_check_constraints': 0,
+        'synchronous': 0})
+
+
 def maybe_init(pr_number, repo_id):
     path = get_project_root()
     db_dir = os.path.join(path, 'data', str(repo_id), 'chunks')
@@ -49,6 +58,7 @@ class Chunk(Model):
     start = IntegerField()
     end = IntegerField()
     body = BlobField()
+    sloc = IntegerField()
 
     class Meta:
         database = db

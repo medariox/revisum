@@ -6,6 +6,7 @@ from collections import OrderedDict
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from .utils import get_project_root
 from .database.snippet import maybe_init, Snippet as DataSnippet
+from .metrics import Metrics
 
 
 class SnippetsTrainer(object):
@@ -155,6 +156,10 @@ class SnippetsTrainer(object):
 
         self.iterate(iterations, repo_id=repo_id, model=model,
                      model_path=model_path)
+
+        metrics = Metrics(repo_id)
+        print(metrics.risk_profile('sloc', 'med'))
+        metrics.save()
 
     def iterate(self, times, **kwargs):
         repo_id = kwargs.get('repo_id') or self.repo_id

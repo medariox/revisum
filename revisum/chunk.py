@@ -25,8 +25,6 @@ class Chunk(object):
         self._metrics = None
         self._encoded_b64_hash = None
 
-        self.metrics
-
     def __str__(self):
         return '\n'.join(self.lines)
 
@@ -41,6 +39,10 @@ class Chunk(object):
         if not self._tokens:
             self._to_tokens()
         return self._tokens
+
+    @property
+    def repo_id(self):
+        return self.snippet_id.split('-', 2)[1]
 
     @property
     def pr_id(self):
@@ -59,7 +61,7 @@ class Chunk(object):
     @property
     def metrics(self):
         if not self._metrics:
-            self._metrics = Metrics(str(self))
+            self._metrics = Metrics(self.repo_id, code=str(self))
         return self._metrics
 
     @property
@@ -140,7 +142,8 @@ class Chunk(object):
                      file_path=self.file_path,
                      start=self.start,
                      end=self.end,
-                     body=self._serialize())
+                     body=self._serialize(),
+                     sloc=self.metrics.sloc)
              .where(DataChunk.b64_hash == chunk.b64_hash)
              .execute())
         else:
@@ -152,4 +155,5 @@ class Chunk(object):
                      file_path=self.file_path,
                      start=self.start,
                      end=self.end,
-                     body=self._serialize()))
+                     body=self._serialize(),
+                     sloc=self.metrics.sloc))
