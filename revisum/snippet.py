@@ -22,6 +22,10 @@ class Snippet(object):
     def __str__(self):
         return '\n'.join(self.target_lines())
 
+    @property
+    def chunks(self):
+        return self._chunks
+
     @staticmethod
     def repo_id(snippet_id):
         return snippet_id.split('-')[3]
@@ -113,20 +117,45 @@ class Snippet(object):
     @classmethod
     def load(cls, snippet_id, path=None):
         repo_id = cls.repo_id(snippet_id)
-        pr_number = cls.pr_number(snippet_id)
-        maybe_init(repo_id, pr_number=pr_number, path=path)
+        maybe_init(repo_id, path=path)
 
-        snippet = DataSnippet.get_or_none(snippet_id=snippet_id)
-        if snippet:
-            return pickle.loads(snippet.chunks)
+        db_snippet = DataSnippet.get_or_none(snippet_id=snippet_id)
+        if db_snippet:
+            chunks = pickle.loads(db_snippet.chunks)
+            source = db_snippet.source
+            target = db_snippet.target
+
+            snippet = cls(snippet_id, chunks, source, target)
+            return snippet
+
+    @classmethod
+    def load_all(cls, repo_id, path=None):
+        maybe_init(repo_id, path=path)
+
+        query = DataSnippet.select(
+            DataSnippet.snippet_id,
+            DataSnippet.chunks,
+            DataSnippet.source,
+            DataSnippet.target)
+
+        snippets = []
+        for db_snippet in query:
+            snippet_id = db_snippet.snippet_id
+            chunks = pickle.loads(db_snippet.chunks)
+            source = db_snippet.source
+            target = db_snippet.target
+
+            snippet = cls(snippet_id, chunks, source, target)
+            snippets.append(snippet)
+
+        return snippets
 
     def _serialize(self):
         return pickle.dumps(self._chunks, pickle.HIGHEST_PROTOCOL)
 
     def save(self):
         repo_id = self.repo_id(self.snippet_id)
-        pr_number = self.pr_number(self.snippet_id)
-        maybe_init(repo_id, pr_number=pr_number)
+        maybe_init(repo_id)
 
         snippet = DataSnippet.get_or_none(snippet_id=self.snippet_id)
         if snippet:

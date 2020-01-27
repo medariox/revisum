@@ -4,6 +4,8 @@ import pickle
 from collections import OrderedDict
 
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+
+from .snippet import Snippet
 from .utils import get_project_root
 from .database.snippet import maybe_init, Snippet as DataSnippet
 from .metrics import Metrics
@@ -91,14 +93,7 @@ class SnippetsTrainer(object):
 
     @staticmethod
     def _from_db(repo_id, path=None):
-        maybe_init(repo_id, path=path)
-
-        snippets = []
-        for db_snippet in DataSnippet.select(DataSnippet.chunks):
-            snippet = pickle.loads(db_snippet.chunks)
-            snippets.append(snippet)
-
-        return snippets
+        return Snippet.load_all(repo_id, path)
 
     def evaluate(self, repo_id, threshold=0.75):
         path = get_project_root()

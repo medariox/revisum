@@ -130,8 +130,8 @@ def evaluate(repo_id):
 
     print('--------------------------------------')
     snippet_id = Chunk.load_snippet_id(match_id)
-    chunks = Snippet.load(snippet_id)
-    for chunk in chunks:
+    snippet = Snippet.load(snippet_id)
+    for chunk in snippet.chunks:
         print(str(chunk))
 
     print('--------------------------------------')

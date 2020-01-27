@@ -23,9 +23,11 @@ def init(db_path):
         'synchronous': 0})
 
 
-def maybe_init(pr_number, repo_id):
-    path = get_project_root()
-    db_dir = os.path.join(path, 'data', str(repo_id), 'chunks')
+def maybe_init(pr_number, repo_id, path=None):
+    if path is not None:
+        db_dir = os.path.join(path, 'chunks')
+    else:
+        db_dir = os.path.join(get_project_root(), 'data', str(repo_id), 'chunks')
     if not os.path.isdir(db_dir):
         os.makedirs(db_dir)
 

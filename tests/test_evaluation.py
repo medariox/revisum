@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from revisum.snippet import Snippet
+from revisum.chunk import Chunk
 from revisum.trainer import SnippetsTrainer
 from gensim.models.doc2vec import Doc2Vec
 
@@ -61,8 +62,10 @@ def evaluate():
         # model.trainables.reset_weights(model.hs, model.negative, model.wv, model.docvecs)
 
         print('--------------------------------------')
+        print(test_dir)
+        print(model_dir)
 
-        SnippetsTrainer(repo_id=str(test_dir), path=model_dir).iterate(
+        SnippetsTrainer(repo_id=test_dir, path=model_dir).iterate(
             15, model=model, model_path=model_path)
 
         model2 = Doc2Vec.load(model_path)
@@ -74,8 +77,12 @@ def evaluate():
         print(tokens)
         tokens_el = Snippet.as_elements(tokens)
         print(tokens_el)
+        print('\n')
 
-        matched_code = Snippet.load(sims[0][0], path=os.path.join(tests_data, test_dir))
+        path = os.path.join(tests_data, test_dir)
+        snippet_id = Chunk.load_snippet_id(sims[0][0], path=path)
+        matched_code = Snippet.load(snippet_id, path=path)
+
         matched_tokens = Snippet.as_tokens(str(matched_code))
         print(matched_tokens)
         tokens_el = Snippet.as_elements(matched_tokens)

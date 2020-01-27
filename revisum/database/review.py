@@ -30,7 +30,7 @@ def maybe_init(repo_id):
 
     if not os.path.isfile(db_path):
         create()
-        print('Review database created for: {0}'.format(repo_id))
+        print('Reviews database created for: {0}'.format(repo_id))
 
 
 def create():
