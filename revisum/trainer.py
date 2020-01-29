@@ -159,7 +159,7 @@ class SnippetTrainer(object):
                                                  tags=[b64_hash])
                     tagged_data.append(tagged_line)
 
-            self._tagged_data += tagged_data
+            self._tagged_data = tagged_data
 
         self.iterate(iterations, repo_id=repo_id, model=model,
                      model_path=model_path)
