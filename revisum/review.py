@@ -10,7 +10,7 @@ class Review(object):
         self.body = comment.body
         self.comment_id = comment.id
         self.user_id = comment.user.id
-        self.user_login = comment.user.login
+        self.user_login = comment.user.loginsss
         self.state = state or comment.state
 
     @property
