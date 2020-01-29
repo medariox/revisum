@@ -4,7 +4,7 @@ from itertools import chain
 from textwrap import dedent
 
 from .metrics import Metrics, MetricsException
-from .tokenizer import LinesTokenizer
+from .tokenizer import LineTokenizer
 from .utils import b64_decode, b64_encode
 from .database.chunk import maybe_init, Chunk as DataChunk
 
@@ -86,7 +86,7 @@ class Chunk(object):
         return self._lines
 
     def _to_tokens(self):
-        self._tokens = LinesTokenizer(self.lines).tokens
+        self._tokens = LineTokenizer(self.lines).tokens
         return self._tokens
 
     @classmethod
@@ -118,7 +118,7 @@ class Chunk(object):
 
     @classmethod
     def as_tokens(cls, body):
-        return LinesTokenizer(cls.as_text(body)).tokens
+        return LineTokenizer(cls.as_text(body)).tokens
 
     @classmethod
     def pr_number_from_hash(cls, b64_hash):

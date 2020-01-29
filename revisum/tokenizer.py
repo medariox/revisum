@@ -3,7 +3,7 @@ from pygments.lexers import PythonLexer
 from pygments.token import Token
 
 
-class LinesTokenizer(object):
+class LineTokenizer(object):
 
     def __init__(self, lines):
         self._lines = lines

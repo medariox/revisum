@@ -1,6 +1,6 @@
 import pickle
 
-from .tokenizer import LinesTokenizer
+from .tokenizer import LineTokenizer
 from .database.snippet import maybe_init, Snippet as DataSnippet
 
 
@@ -88,14 +88,14 @@ class Snippet(object):
         elif origin == 'source':
             lines = self.source_lines()
 
-        return LinesTokenizer(lines).tokens
+        return LineTokenizer(lines).tokens
 
     @classmethod
     def as_tokens(cls, code):
         if not isinstance(code, list):
             code = [code]
 
-        tokens = LinesTokenizer(code).tokens
+        tokens = LineTokenizer(code).tokens
         lines = []
         for line in tokens:
             lines += line
@@ -107,7 +107,7 @@ class Snippet(object):
         if not isinstance(code, list):
             code = [code]
 
-        tokens = LinesTokenizer(code).elements
+        tokens = LineTokenizer(code).elements
         lines = []
         for line in tokens:
             lines += line
