@@ -16,7 +16,7 @@ class SnippetCollector(object):
         self.repo_name = self._repo.raw_data['full_name']
         self.repo_id = self._repo.raw_data['id']
 
-    def first_run(self):
+    def from_branch(self):
         cur_path = get_project_root()
         path = Path(os.path.join(cur_path, 'tmp'))
 
@@ -40,7 +40,7 @@ class SnippetCollector(object):
 
         return snippets
 
-    def collect_snippets(self, update=True, limit=None):
+    def from_pulls(self, update=True, limit=None):
         pulls = self._repo.get_pulls(state='all', sort='updated', direction='desc')
         newest_review = Review.newest_accepted(self._repo.id) if update else None
         limit = limit or 500
