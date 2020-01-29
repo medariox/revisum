@@ -1,81 +1,24 @@
-import os.path
-
-from pathlib import Path
+import os
 
 from gensim.models.doc2vec import Doc2Vec
 
 from revisum.chunk import Chunk
-from revisum.pull_request import PullRequest
 from revisum.review import Review
 from revisum.snippet import Snippet
 from revisum.trainer import SnippetsTrainer
-from revisum.utils import get_project_root, gh_session
-from revisum.parsers.python_parser import PythonFileParser
-
-repo = gh_session().get_repo('psf/requests')
+from revisum.processor import Processor
+from revisum.utils import get_project_root
 
 
-def train():
-    pulls = repo.get_pulls(state='all', sort='updated', direction='desc')
+def train(repo_name):
 
-    review_count = 0
-    limit = 5
-    snippets = []
-
-    newest_review = Review.newest_accepted(repo.id)
-
-    for pull in pulls:
-
-        if newest_review == pull.number:
-            print('Reached newest review!')
-            break
-
-        pull_request = PullRequest(repo.id, pull.number, repo.full_name, pull.head.sha)
-        if pull_request.is_valid:
-            for snippet in pull_request.snippets:
-                print('--------------------------------------------------------------------')
-                print(str(snippet))
-                print('--------------------------------------------------------------------')
-            snippets += pull_request.snippets
-            pull_request.save()
-            review_count += 1
-
-            print('Total reviews: [{count}/{limit}]'.format(count=review_count, limit=limit))
-        if review_count == limit:
-            break
-
-    SnippetsTrainer(snippets).train(repo.id, iterations=20, force=False)
+    proc = Processor(repo_name)
+    snippets = proc.first_run()
+    snippets += proc.collect_snippets(limit=5)
+    SnippetsTrainer(snippets).train(proc.repo_id, iterations=20, force=False)
 
 
-train()
-
-
-def first_run(repo_id):
-    cur_path = get_project_root()
-    path = Path(os.path.join(cur_path, 'tmp'))
-
-    snippets = []
-
-    files = list(path.rglob('*.py'))
-    for file_no, f in enumerate(files, 1):
-        parser = PythonFileParser(0, repo_id, f)
-        chunks = parser.parse(file_no=file_no)
-        if not chunks:
-            continue
-
-        snippet_id = Snippet.make_id(0, file_no, 0, repo_id)
-        snippet = Snippet(snippet_id, chunks, str(f), str(f))
-        snippets.append(snippet)
-
-    for snippet in snippets:
-        snippet.save()
-        for chunk in snippet._chunks:
-            chunk.save(0, repo_id)
-
-    SnippetsTrainer(snippets).train(repo_id, iterations=20, force=False)
-
-
-first_run(repo.id)
+train('psf/requests')
 
 
 def evaluate(repo_id):

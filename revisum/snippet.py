@@ -11,8 +11,8 @@ class Snippet(object):
         self._chunks = chunks
         self.start = chunks[0].start
         self.length = self.total_len(chunks[0].start, chunks[-1].end)
-        self.source_file = source
-        self.target_file = target
+        self.source_file = str(source)
+        self.target_file = str(target)
 
         self._target_lines = []
         self._source_lines = []
