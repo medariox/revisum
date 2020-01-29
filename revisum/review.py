@@ -41,7 +41,8 @@ class Review(object):
 
         review = (DataReview.select(DataReview.pr_number).where(
             (DataReview.repo_id == repo_id) &
-            (DataReview.state.in_(['APPROVED', 'CLOSED'])))
+            (DataReview.state == 'CLOSED') |
+            ((DataReview.state == 'APPROVED') & (DataReview.pr_merged == 1)))
             .order_by(DataReview.pr_number.desc())
             .first())
 
