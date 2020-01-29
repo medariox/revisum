@@ -1,5 +1,9 @@
 import os
+import shutil
+import zipfile
 from pathlib import Path
+
+import requests
 
 from .pull_request import PullRequest
 from .review import Review
@@ -13,12 +17,56 @@ class SnippetCollector(object):
     def __init__(self, repo):
         self._gh_session = gh_session()
         self._repo = self._gh_session.get_repo(repo)
+
         self.repo_name = self._repo.raw_data['full_name']
         self.repo_id = self._repo.raw_data['id']
+        self.branch = self._repo.default_branch
 
-    def from_branch(self):
-        cur_path = get_project_root()
-        path = Path(os.path.join(cur_path, 'tmp'))
+    def collect(self, limit):
+        snippets = []
+
+        if self._is_first_run():
+            self._download_branch()
+            self._unpack_branch()
+            snippets += self.from_branch()
+
+        snippets += self.from_pulls(limit=limit)
+        return snippets
+
+    def _is_first_run(self):
+        db_dir = os.path.join(get_project_root(), 'data', str(self.repo_id))
+        if not os.path.isdir(db_dir):
+            return True
+        return False
+
+    def _download_branch(self):
+        url = 'https://codeload.github.com/{0}/zip/{1}'.format(self.repo_name, self.branch)
+        response = requests.get(url, stream=True)
+
+        file_name = '{0}.zip'.format(self.repo_id)
+        file_path = os.path.join(get_project_root(), 'tmp', file_name)
+
+        print('Downloading branch {0} for {1}...'.format(self.branch, self.repo_name))
+        with open(file_path, 'wb') as out_file:
+            shutil.copyfileobj(response.raw, out_file)
+
+        print('Download completed!')
+        del response
+
+    def _unpack_branch(self):
+        file_name = '{0}.zip'.format(self.repo_id)
+        source = os.path.join(get_project_root(), 'tmp', file_name)
+        dest = os.path.join(get_project_root(), 'tmp', str(self.repo_id))
+
+        print('Unpacking file {0} for {1}...'.format(file_name, self.repo_name))
+        with zipfile.ZipFile(source, 'r') as zip_ref:
+            zip_ref.extractall(dest)
+
+        print('Unpack completed!')
+        os.remove(source)
+
+    def from_branch(self, delete=True):
+        path = Path(os.path.join(get_project_root(), 'tmp', str(self.repo_id)))
 
         snippets = []
 
@@ -38,12 +86,16 @@ class SnippetCollector(object):
             for chunk in snippet._chunks:
                 chunk.save(0, self.repo_id)
 
+        if delete:
+            print('Deleting brach folder {0}...'.format(self.repo_id))
+            shutil.rmtree(path)
+
         return snippets
 
     def from_pulls(self, update=True, limit=None):
         pulls = self._repo.get_pulls(state='all', sort='updated', direction='desc')
         newest_review = Review.newest_accepted(self._repo.id) if update else None
-        limit = limit or 500
+        limit = limit or 200
 
         review_count = 0
         snippets = []
