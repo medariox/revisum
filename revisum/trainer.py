@@ -12,7 +12,7 @@ class SnippetTrainer(object):
 
     def __init__(self, snippets=None, repo_id=None, path=None, external=False):
         if not (snippets or (repo_id and path)):
-            raise ValueError('SnippetTrainer needs either snippets or repo_id')
+            raise ValueError('SnippetTrainer needs either snippets or repo_id and path')
 
         self._snippets = snippets or self._from_db(repo_id, path)
         self.repo_id = repo_id
@@ -143,8 +143,23 @@ class SnippetTrainer(object):
         else:
             print('Updating existing vocabulary')
             model = Doc2Vec.load(model_path)
-            model.trainables.reset_weights(model.hs, model.negative, model.wv, model.docvecs)
+            # model.trainables.reset_weights(model.hs, model.negative, model.wv, model.docvecs)
             # model.build_vocab(tagged_data, update=True)
+
+            tagged_data = []
+            snippets = self._from_db(repo_id)
+            for snippet in snippets:
+
+                chunks = OrderedDict()
+                for chunk in snippet._chunks:
+                    chunks[chunk.b64_hash] = chunk
+
+                for b64_hash, unique_chunk in chunks.items():
+                    tagged_line = TaggedDocument(words=unique_chunk.merged_tokens,
+                                                 tags=[b64_hash])
+                    tagged_data.append(tagged_line)
+
+            self._tagged_data += tagged_data
 
         self.iterate(iterations, repo_id=repo_id, model=model,
                      model_path=model_path)
@@ -160,6 +175,7 @@ class SnippetTrainer(object):
 
         model = kwargs['model']
         model_path = kwargs.get('model_path')
+
         # Reset iterations
         model.trainables.reset_weights(model.hs, model.negative, model.wv, model.docvecs)
         model.train(documents=self.tagged_data,
