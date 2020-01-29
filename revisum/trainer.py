@@ -1,21 +1,18 @@
 import os.path
-import pickle
-
 from collections import OrderedDict
 
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 
 from .snippet import Snippet
 from .utils import get_project_root
-from .database.snippet import maybe_init, Snippet as DataSnippet
 from .metrics import Metrics
 
 
-class SnippetsTrainer(object):
+class SnippetTrainer(object):
 
     def __init__(self, snippets=None, repo_id=None, path=None, external=False):
         if not (snippets or (repo_id and path)):
-            raise ValueError('SnippetsTrainer needs either snippets or repo_id')
+            raise ValueError('SnippetTrainer needs either snippets or repo_id')
 
         self._snippets = snippets or self._from_db(repo_id, path)
         self.repo_id = repo_id

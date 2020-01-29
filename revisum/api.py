@@ -2,7 +2,7 @@ import hug
 import requests
 
 from .pull_request import PullRequest
-from .trainer import SnippetsTrainer
+from .trainer import SnippetTrainer
 from .snippet import Snippet
 from .review import Review
 from .utils import gh_session
@@ -33,7 +33,7 @@ def evaluate_code(repo_id: hug.types.number, snippet_url: hug.types.text,
     code = [line for line in response.iter_lines(decode_unicode=True)]
     snippet = Snippet.as_tokens(code)
 
-    return SnippetsTrainer(snippet, external=True).evaluate(
+    return SnippetTrainer(snippet, external=True).evaluate(
         repo_id=repo_id, threshold=threshold
     )
 
@@ -43,7 +43,7 @@ def evaluate_snippet(repo_id: hug.types.number, pull_id: hug.types.number,
                      threshold: float = 0.75):
     snippets = PullRequest(repo_id, pull_id).snippets
 
-    return SnippetsTrainer(snippets).evaluate(
+    return SnippetTrainer(snippets).evaluate(
         repo_id=repo_id, threshold=threshold
     )
 
@@ -65,5 +65,5 @@ def train(repo_id: hug.types.number, limit: hug.types.number = 10, iterations: h
         if review_count == limit:
             break
 
-    SnippetsTrainer(snippets).train(repo_id=repo_id, iterations=iterations, force=True)
+    SnippetTrainer(snippets).train(repo_id=repo_id, iterations=iterations, force=True)
     return 'Finished training for repository: {0}'.format(repo_id)

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from revisum.snippet import Snippet
 from revisum.chunk import Chunk
-from revisum.trainer import SnippetsTrainer
+from revisum.trainer import SnippetTrainer
 from gensim.models.doc2vec import Doc2Vec
 
 
@@ -65,7 +65,7 @@ def evaluate():
         print(test_dir)
         print(model_dir)
 
-        SnippetsTrainer(repo_id=test_dir, path=model_dir).iterate(
+        SnippetTrainer(repo_id=test_dir, path=model_dir).iterate(
             15, model=model, model_path=model_path)
 
         model2 = Doc2Vec.load(model_path)

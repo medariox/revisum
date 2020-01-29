@@ -5,17 +5,17 @@ from gensim.models.doc2vec import Doc2Vec
 from revisum.chunk import Chunk
 from revisum.review import Review
 from revisum.snippet import Snippet
-from revisum.trainer import SnippetsTrainer
-from revisum.processor import Processor
+from revisum.trainer import SnippetTrainer
+from revisum.collector import SnippetCollector
 from revisum.utils import get_project_root
 
 
 def train(repo_name):
 
-    proc = Processor(repo_name)
-    snippets = proc.first_run()
-    snippets += proc.collect_snippets(limit=5)
-    SnippetsTrainer(snippets).train(proc.repo_id, iterations=20, force=False)
+    collector = SnippetCollector(repo_name)
+    snippets = collector.first_run()
+    snippets += collector.collect_snippets(limit=5)
+    SnippetTrainer(snippets).train(collector.repo_id, iterations=20, force=False)
 
 
 train('psf/requests')

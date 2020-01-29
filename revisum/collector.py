@@ -8,7 +8,7 @@ from .utils import get_project_root, gh_session
 from .parsers.python_parser import PythonFileParser
 
 
-class Processor(object):
+class SnippetCollector(object):
 
     def __init__(self, repo):
         self._gh_session = gh_session()
