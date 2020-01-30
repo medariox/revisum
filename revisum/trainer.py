@@ -10,11 +10,8 @@ from .metrics import Metrics
 
 class SnippetTrainer(object):
 
-    def __init__(self, snippets=None, repo_id=None, path=None, external=False):
-        if not (snippets or (repo_id and path)):
-            raise ValueError('SnippetTrainer needs either snippets or repo_id and path')
-
-        self._snippets = snippets or self._from_db(repo_id, path)
+    def __init__(self, repo_id, snippets=None, path=None, external=False):
+        self._snippets = snippets or Snippet.load_all(repo_id, path)
         self.repo_id = repo_id
         self.external = external
         self._tokens = []
@@ -23,7 +20,7 @@ class SnippetTrainer(object):
     @property
     def snippets(self):
         """
-        Gets all the snippets used for the training.
+        Snippets used for the training.
 
         :return: All the availible snippets.
         :type: list
@@ -88,13 +85,9 @@ class SnippetTrainer(object):
 
         return {snippet.snippet_id: snippet_lines}
 
-    @staticmethod
-    def _from_db(repo_id, path=None):
-        return Snippet.load_all(repo_id, path)
-
-    def evaluate(self, repo_id, threshold=0.75):
+    def evaluate(self, threshold=0.75):
         path = get_project_root()
-        model_path = os.path.join(path, 'data', str(repo_id), 'd2v.model')
+        model_path = os.path.join(path, 'data', str(self.repo_id), 'd2v.model')
         if not os.path.isfile(model_path):
             return []
 
@@ -116,16 +109,16 @@ class SnippetTrainer(object):
 
         return results
 
-    def train(self, repo_id, iterations=100, force=False, path=None):
+    def train(self, iterations=100, force=False, path=None):
         if path is not None:
             model_dir = path
         else:
-            model_dir = os.path.join(get_project_root(), 'data', str(repo_id))
+            model_dir = os.path.join(get_project_root(), 'data', str(self.repo_id))
 
         model_path = os.path.join(model_dir, 'd2v.model')
 
         if not self.tagged_data:
-            print('Nothing to train for: {0}'.format(repo_id))
+            print('Nothing to train for: {0}'.format(self.repo_id))
             return
 
         if force or not os.path.isfile(model_path):
@@ -146,31 +139,14 @@ class SnippetTrainer(object):
             # model.trainables.reset_weights(model.hs, model.negative, model.wv, model.docvecs)
             # model.build_vocab(tagged_data, update=True)
 
-            tagged_data = []
-            snippets = self._from_db(repo_id)
-            for snippet in snippets:
+        self.iterate(iterations, model=model, model_path=model_path)
 
-                chunks = OrderedDict()
-                for chunk in snippet._chunks:
-                    chunks[chunk.b64_hash] = chunk
-
-                for b64_hash, unique_chunk in chunks.items():
-                    tagged_line = TaggedDocument(words=unique_chunk.merged_tokens,
-                                                 tags=[b64_hash])
-                    tagged_data.append(tagged_line)
-
-            self._tagged_data = tagged_data
-
-        self.iterate(iterations, repo_id=repo_id, model=model,
-                     model_path=model_path)
-
-        metrics = Metrics(repo_id)
+        metrics = Metrics(self.repo_id)
         metrics.save()
 
     def iterate(self, times, **kwargs):
-        repo_id = kwargs.get('repo_id') or self.repo_id
         if not times or times < 1:
-            print('No iterations for: {0}'.format(repo_id))
+            print('No iterations for: {0}'.format(self.repo_id))
             return
 
         model = kwargs['model']
@@ -186,4 +162,4 @@ class SnippetTrainer(object):
         print('Trained document tags: {0}'.format(len(model.docvecs)))
 
         model.save(model_path)
-        print('Model saved for: {0}'.format(repo_id))
+        print('Model saved for: {0}'.format(self.repo_id))

@@ -65,7 +65,7 @@ def evaluate():
         print(test_dir)
         print(model_dir)
 
-        SnippetTrainer(repo_id=test_dir, path=model_dir).iterate(
+        SnippetTrainer(test_dir, path=model_dir).iterate(
             15, model=model, model_path=model_path)
 
         model2 = Doc2Vec.load(model_path)

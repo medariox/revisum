@@ -33,8 +33,8 @@ def evaluate_code(repo_id: hug.types.number, snippet_url: hug.types.text,
     code = [line for line in response.iter_lines(decode_unicode=True)]
     snippet = Snippet.as_tokens(code)
 
-    return SnippetTrainer(snippet, external=True).evaluate(
-        repo_id=repo_id, threshold=threshold
+    return SnippetTrainer(repo_id, snippet, external=True).evaluate(
+        threshold=threshold
     )
 
 
@@ -43,8 +43,8 @@ def evaluate_snippet(repo_id: hug.types.number, pull_id: hug.types.number,
                      threshold: float = 0.75):
     snippets = PullRequest(repo_id, pull_id).snippets
 
-    return SnippetTrainer(snippets).evaluate(
-        repo_id=repo_id, threshold=threshold
+    return SnippetTrainer(repo_id, snippets).evaluate(
+        threshold=threshold
     )
 
 
@@ -65,5 +65,5 @@ def train(repo_id: hug.types.number, limit: hug.types.number = 10, iterations: h
         if review_count == limit:
             break
 
-    SnippetTrainer(snippets).train(repo_id=repo_id, iterations=iterations, force=True)
+    SnippetTrainer(repo_id, snippets).train(iterations=iterations, force=True)
     return 'Finished training for repository: {0}'.format(repo_id)

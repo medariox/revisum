@@ -14,7 +14,7 @@ def train(repo_name):
 
     collector = SnippetCollector(repo_name)
     snippets = collector.collect(limit=5)
-    SnippetTrainer(snippets).train(collector.repo_id, iterations=20, force=False)
+    SnippetTrainer(collector.repo_id, snippets).train(iterations=20, force=False)
 
 
 train('psf/requests')
