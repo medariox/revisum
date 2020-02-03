@@ -55,11 +55,14 @@ class Chunk(object):
         return self.snippet_id.split('-', 2)[2]
 
     @property
+    def chunk_id(self):
+        return '{0}-{1}'.format(self.no, self.snippet_id)
+
+    @property
     def b64_hash(self):
         if not self._encoded_b64_hash:
             self._encoded_b64_hash = b64_encode(
-                '+'.join([self.pr_id, self.file_path,
-                          str(self.start), str(self.end)])
+                '+'.join([self.pr_id, self.file_path, str(self.start)])
             )
 
         return self._encoded_b64_hash
@@ -71,7 +74,12 @@ class Chunk(object):
                 self._metrics = Metrics(self.repo_id, code=str(self))
             except MetricsException as e:
                 raise ChunkException(e)
+
         return self._metrics
+
+    @metrics.setter
+    def metrics(self, metrics_obj):
+        self._metrics = metrics_obj
 
     @property
     def merged_tokens(self):
@@ -94,9 +102,22 @@ class Chunk(object):
         pr_number, repo_id = cls.pr_id_from_hash(b64_hash)
         maybe_init(pr_number, repo_id)
 
-        chunk = DataChunk.get_or_none(b64_hash=b64_hash)
-        if chunk:
-            return pickle.loads(chunk.body)
+        chunk_data = DataChunk.get_or_none(b64_hash=b64_hash)
+        if chunk_data:
+
+            chunk_body = pickle.loads(chunk_data.body)
+            snippet_id = chunk_data.chunk_id.split('-', 1)[1]
+            chunk = Chunk(
+                snippet_id, chunk_data.name, chunk_data.no, chunk_data.file_path,
+                chunk_body, chunk_data.start, chunk_data.end
+            )
+
+            metrics = Metrics(repo_id)
+            metrics.sloc = chunk_data.sloc
+            metrics.complexity = chunk_data.complexity
+            chunk.metrics = metrics
+
+            return chunk
 
     @classmethod
     def load_snippet_id(cls, b64_hash, path=None):
@@ -105,20 +126,18 @@ class Chunk(object):
 
         chunk = DataChunk.get_or_none(b64_hash=b64_hash)
         if chunk:
-            return chunk.snippet_id
+            return chunk.chunk_id.split('-', 1)[1]
 
-    @classmethod
-    def as_text(cls, body, pretty=False):
+    def as_text(self, pretty=False):
         lines = []
-        for line_tokens in body:
+        for line_tokens in self._body:
             line = ''.join(line[1] for line in line_tokens)
             lines.append(line.rstrip())
 
         return '\n'.join(lines) if pretty else lines
 
-    @classmethod
-    def as_tokens(cls, body):
-        return LineTokenizer(cls.as_text(body)).tokens
+    def as_tokens(self):
+        return LineTokenizer(self.as_text()).tokens
 
     @classmethod
     def pr_number_from_hash(cls, b64_hash):
@@ -144,7 +163,7 @@ class Chunk(object):
         chunk = DataChunk.get_or_none(b64_hash=self.b64_hash)
         if chunk:
             (DataChunk
-             .update(snippet_id=self.snippet_id,
+             .update(chunk_id=self.chunk_id,
                      b64_hash=self.b64_hash,
                      name=self.name,
                      no=self.no,
@@ -158,7 +177,7 @@ class Chunk(object):
              .execute())
         else:
             (DataChunk
-             .create(snippet_id=self.snippet_id,
+             .create(chunk_id=self.chunk_id,
                      b64_hash=self.b64_hash,
                      name=self.name,
                      no=self.no,

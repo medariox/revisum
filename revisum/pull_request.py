@@ -31,7 +31,14 @@ class PullRequest(object):
 
     @property
     def is_valid(self):
-        return self.has_valid_review() and self.has_valid_snippet()
+        valid = self.has_valid_review() and self.has_valid_snippet()
+        if valid:
+            print(
+                'Found valid snippet(s) for: {0} [{1}]'.format(
+                    self.title, self.number
+                )
+            )
+        return valid
 
     def change_url(self, path):
         url = 'https://raw.githubusercontent.com/{0}/{1}/{2}'.format(
@@ -46,7 +53,10 @@ class PullRequest(object):
         return self._snippets
 
     def has_valid_snippet(self):
-        return bool(self.snippets)
+        valid = bool(self.snippets)
+        if not valid:
+            print('No valid snippet for: {0} [{1}]'.format(self.title, self.number))
+        return valid
 
     def _make_snippets(self):
         patch = PatchSet(self.patch_content)
@@ -64,7 +74,7 @@ class PullRequest(object):
             for hunk_no, hunk in enumerate(change, 1):
 
                 start = hunk.target_start
-                stop = start + hunk.target_length
+                stop = start + hunk.target_length - 1
                 chunks = parser.parse_single(hunk_no, file_no, start, stop)
                 if not chunks:
                     continue
@@ -148,11 +158,6 @@ class PullRequest(object):
             return False
 
         if self._valid_reviews:
-            print(
-                'Found valid review for: {0} [{1}]'.format(
-                    self.title, self.number
-                )
-            )
             return True
 
         print('No valid review for: {0} [{1}]'.format(self.title, self.number))
@@ -180,7 +185,7 @@ class PullRequest(object):
         if self.valid_reviews:
             for snippet in self._snippets:
                 snippet.save()
-                for chunk in snippet._chunks:
+                for chunk in snippet.chunks:
                     chunk.save(self.number, self.repo_id)
 
             for valid_review in self._valid_reviews:

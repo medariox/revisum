@@ -1,5 +1,6 @@
 import pickle
 
+from .chunk import Chunk
 from .tokenizer import LineTokenizer
 from .database.snippet import maybe_init, Snippet as DataSnippet
 
@@ -9,6 +10,7 @@ class Snippet(object):
     def __init__(self, snippet_id, chunks, source, target):
         self.snippet_id = snippet_id
         self._chunks = chunks
+        self._chunk_hashes = []
         self.start = chunks[0].start
         self.length = self.total_len(chunks[0].start, chunks[-1].end)
         self.source_file = str(source)
@@ -25,6 +27,13 @@ class Snippet(object):
     @property
     def chunks(self):
         return self._chunks
+
+    @property
+    def chunk_hashes(self):
+        if not self._chunk_hashes:
+            self._chunk_hashes = [c.b64_hash for c in self._chunks]
+
+        return self._chunk_hashes
 
     @staticmethod
     def repo_id(snippet_id):
@@ -121,7 +130,12 @@ class Snippet(object):
 
         db_snippet = DataSnippet.get_or_none(snippet_id=snippet_id)
         if db_snippet:
-            chunks = pickle.loads(db_snippet.chunks)
+
+            chunks = []
+            chunk_hashes = pickle.loads(db_snippet.chunk_hashes)
+            for b64_hash in chunk_hashes:
+                chunks.append(Chunk.load(b64_hash))
+
             source = db_snippet.source
             target = db_snippet.target
 
@@ -134,14 +148,19 @@ class Snippet(object):
 
         query = DataSnippet.select(
             DataSnippet.snippet_id,
-            DataSnippet.chunks,
+            DataSnippet.chunk_hashes,
             DataSnippet.source,
             DataSnippet.target)
 
         snippets = []
         for db_snippet in query:
             snippet_id = db_snippet.snippet_id
-            chunks = pickle.loads(db_snippet.chunks)
+
+            chunks = []
+            chunk_hashes = pickle.loads(db_snippet.chunk_hashes)
+            for b64_hash in chunk_hashes:
+                chunks.append(Chunk.load(b64_hash))
+
             source = db_snippet.source
             target = db_snippet.target
 
@@ -150,8 +169,8 @@ class Snippet(object):
 
         return snippets
 
-    def _serialize(self):
-        return pickle.dumps(self._chunks, pickle.HIGHEST_PROTOCOL)
+    def _serialize_hashes(self):
+        return pickle.dumps(self.chunk_hashes, pickle.HIGHEST_PROTOCOL)
 
     def save(self):
         repo_id = self.repo_id(self.snippet_id)
@@ -165,7 +184,7 @@ class Snippet(object):
                      length=self.length,
                      source=self.source_file,
                      target=self.target_file,
-                     chunks=self._serialize())
+                     chunk_hashes=self._serialize_hashes())
              .where(DataSnippet.snippet_id == self.snippet_id)
              .execute())
         else:
@@ -175,4 +194,4 @@ class Snippet(object):
                      length=self.length,
                      source=self.source_file,
                      target=self.target_file,
-                     chunks=self._serialize()))
+                     chunk_hashes=self._serialize_hashes()))

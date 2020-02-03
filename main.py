@@ -13,8 +13,8 @@ from revisum.utils import get_project_root
 def train(repo_name):
 
     collector = SnippetCollector(repo_name)
-    snippets = collector.collect(limit=5)
-    SnippetTrainer(collector.repo_id, snippets).train(iterations=20, force=False)
+    collector.collect(limit=5)
+    SnippetTrainer(collector.repo_id).train(iterations=20, force=False)
 
 
 train('psf/requests')
@@ -66,14 +66,15 @@ def evaluate(repo_id):
     print('For {input} matched {result}!'.format(input=tokens, result=match_id))
 
     print('--------------------------------------')
-    matched_code = Chunk.load(match_id)
-    print(Chunk.as_text(matched_code, pretty=True))
-    print(Chunk.as_tokens(matched_code))
+    chunk = Chunk.load(match_id)
+    print(chunk.as_text(pretty=True))
+    print(chunk.as_tokens())
 
     print('--------------------------------------')
     snippet_id = Chunk.load_snippet_id(match_id)
     snippet = Snippet.load(snippet_id)
     for chunk in snippet.chunks:
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         print(str(chunk))
 
     print('--------------------------------------')

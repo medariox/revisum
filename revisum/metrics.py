@@ -44,6 +44,10 @@ class Metrics(object):
 
         return self._sloc
 
+    @sloc.setter
+    def sloc(self, value):
+        self._sloc = value
+
     @property
     def complexity(self):
         if not self._complexity:
@@ -54,6 +58,10 @@ class Metrics(object):
                 self._complexity = sum(c.complexity for c in comp)
 
         return self._complexity
+
+    @complexity.setter
+    def complexity(self, value):
+        self._complexity = value
 
     @property
     def ast_node(self):

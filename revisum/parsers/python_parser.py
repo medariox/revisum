@@ -197,12 +197,6 @@ class PythonFileParser(object):
     def _make_chunk(self):
         self._rm_last_line()
 
-        print('----------------')
-        print(self.chunk_name)
-        print(self._snippet_start)
-        print(self._snippet_end)
-        print('----------------')
-
         try:
             chunk = Chunk(
                 self.snippet_id, self.chunk_name, self._chunks_count, self.file_path,

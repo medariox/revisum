@@ -40,7 +40,7 @@ class Snippet(Model):
     length = IntegerField()
     source = CharField()
     target = CharField()
-    chunks = BlobField()
+    chunk_hashes = BlobField()
 
     class Meta:
         database = db

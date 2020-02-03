@@ -61,7 +61,7 @@ class SnippetTrainer(object):
         for snippet in self.snippets:
 
             chunks = OrderedDict()
-            for chunk in snippet._chunks:
+            for chunk in snippet.chunks:
                 chunks[chunk.b64_hash] = chunk
 
             for b64_hash, unique_chunk in chunks.items():

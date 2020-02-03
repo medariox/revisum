@@ -52,7 +52,7 @@ def create():
 
 class Chunk(Model):
 
-    snippet_id = CharField()
+    chunk_id = CharField()
     b64_hash = CharField()
     name = CharField()
     no = IntegerField()

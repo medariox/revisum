@@ -83,7 +83,7 @@ class SnippetCollector(object):
 
         for snippet in snippets:
             snippet.save()
-            for chunk in snippet._chunks:
+            for chunk in snippet.chunks:
                 chunk.save(0, self.repo_id)
 
         if delete:
