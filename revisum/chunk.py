@@ -29,6 +29,7 @@ class Chunk(object):
         self._metrics = None
         self._encoded_b64_hash = None
 
+        # Compute metrics
         self.metrics
 
     def __str__(self):

@@ -94,6 +94,9 @@ class PythonFileParser(object):
             return True
         return False
 
+    def next_chunk(self, line_tokens):
+        return self.is_func_or_class(line_tokens) or self._is_new_chunk(line_tokens[0])
+
     def is_func_or_class(self, line_tokens):
         for i, token in enumerate(line_tokens):
             # Remember the first token
@@ -103,24 +106,53 @@ class PythonFileParser(object):
             if token[1] == '__init__':
                 continue
 
-            if token[0] in (Token.Name.Class, Token.Name.Function, Token.Name.Function.Magic):
-                if self._snippet_body:
-                    # Detect inner functions based on indentations
-                    if first_token[0] == Token.Text and first_token[1].strip() == '':
-                        first_body_token = self._snippet_body[0][0]
+            if token[0] not in (Token.Name.Class, Token.Name.Function,
+                                Token.Name.Function.Magic):
+                continue
 
-                        # Current snippet also starts with an indent
-                        if first_body_token[0] == Token.Text:
-                            if len(first_body_token[1]) < len(first_token[1]):
-                                return False
+            if self._snippet_body:
+                # Detect inner functions based on indentations
+                if first_token[0] == Token.Text and first_token[1].strip() == '':
+                    first_body_token = self._snippet_body[0][0]
 
-                        # Current snippet starts with a keyword
-                        elif first_body_token[0] == Token.Keyword:
-                            body_token_type = self._snippet_body[0][2][0]
-                            if body_token_type != Token.Name.Class:
-                                return False
+                    # Current chunk also starts with an indent
+                    if first_body_token[0] == Token.Text:
+                        if len(first_body_token[1]) < len(first_token[1]):
+                            return False
 
+                    # Current chunk starts with a keyword
+                    elif first_body_token[0] == Token.Keyword:
+                        body_token_type = self._snippet_body[0][2][0]
+                        if body_token_type != Token.Name.Class:
+                            return False
+
+            return True
+
+    def _is_new_chunk(self, first_line_token):
+        if not self._snippet_body:
+            return False
+
+        if first_line_token[1] == '\n':
+            return False
+
+        if first_line_token[0] == Token.Name.Decorator:
+            return True
+
+        if first_line_token[0] == Token.Comment.Single:
+            return True
+
+        first_token = self._snippet_body[0][0]
+        # Detect indentation level of current chunk
+        if first_token[0] == Token.Text and first_token[1].strip() == '':
+            first_token_len = len(first_token[1])
+        else:
+            first_token_len = 0
+
+        if first_line_token[0] == Token.Text:
+            if len(first_line_token[1]) <= first_token_len:
                 return True
+
+        return False
 
     def parse(self, file_no=None, start=None, stop=None):
         if file_no:
@@ -129,14 +161,17 @@ class PythonFileParser(object):
         for i, line in self._read(start=start):
             line_tokens = list(lex(line, PythonLexer()))
 
-            if self.is_func_or_class(line_tokens):
+            if self.next_chunk(line_tokens):
                 if self._is_complete():
                     self._make_chunk()
+
                 if stop is not None and i > stop:
                     break
 
-                self._snippet_body.append(line_tokens)
-                self._snippet_start = i
+                if self.is_func_or_class(line_tokens):
+                    self._snippet_body.append(line_tokens)
+                    self._snippet_start = i
+
             elif self._snippet_body:
                 self._snippet_body.append(line_tokens)
                 self._snippet_end = i
