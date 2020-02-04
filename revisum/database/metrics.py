@@ -2,10 +2,9 @@ import os.path
 
 from ..utils import get_project_root
 from peewee import (
-    BooleanField,
     SqliteDatabase,
-    Model, CharField,
-    FloatField,
+    Model,
+    CharField,
     IntegerField
 )
 

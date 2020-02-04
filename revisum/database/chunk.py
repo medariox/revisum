@@ -14,25 +14,15 @@ from peewee import (
 db = SqliteDatabase(None)
 
 
-def init(db_path):
-    db.init(str(db_path), pragmas={
-        'journal_mode': 'wal',
-        'cache_size': -1 * 64000,  # 64MB
-        'foreign_keys': 1,
-        'ignore_check_constraints': 0,
-        'synchronous': 0})
-
-
 def maybe_init(pr_number, repo_id, path=None):
     if path is not None:
-        db_dir = os.path.join(path, 'chunks')
+        db_dir = path
     else:
-        db_dir = os.path.join(get_project_root(), 'data', str(repo_id), 'chunks')
+        db_dir = os.path.join(get_project_root(), 'data', str(repo_id))
     if not os.path.isdir(db_dir):
         os.makedirs(db_dir)
 
-    name = '{0}-{1}'.format(pr_number, repo_id)
-    db_name = name + '.db'
+    db_name = 'chunks.db'
     db_path = os.path.join(db_dir, db_name)
     db.init(db_path, pragmas={
         'journal_mode': 'wal',
@@ -43,7 +33,7 @@ def maybe_init(pr_number, repo_id, path=None):
 
     if not os.path.isfile(db_path):
         create()
-        print('Chunks database created for: {0}'.format(name))
+        print('Chunks database created for: {0}-{1}'.format(pr_number, repo_id))
 
 
 def create():

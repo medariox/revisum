@@ -1,14 +1,11 @@
-import os
 from ast import parse
-from pathlib import Path
 
 from radon.complexity import cc_visit_ast
 from radon.raw import analyze
 from sortedcontainers import SortedList
 
-from .database.chunk import init, Chunk as DataChunk
+from .database.chunk import Chunk as DataChunk
 from .database.metrics import maybe_init, Metrics as DataMetrics
-from .utils import get_project_root
 
 
 class MetricsException(Exception):
@@ -83,20 +80,15 @@ class Metrics(object):
             return self._db_data[metric][int(th) - 1]
 
     def from_chunks(self):
-        cur_path = get_project_root()
-        path = Path(os.path.join(cur_path, 'data', str(self.repo_id), 'chunks'))
+        maybe_init(self.repo_id)
 
         db_metrics = {}
-        files = list(path.rglob('*.db'))
-
-        for f in files:
-            init(f)
-            data = DataChunk.select()
-            for metric in self._metrics:
-                if not db_metrics.get(metric):
-                    db_metrics[metric] = SortedList(getattr(a, metric) for a in data)
-                else:
-                    db_metrics[metric].update(getattr(a, metric) for a in data)
+        data = DataChunk.select()
+        for metric in self._metrics:
+            if not db_metrics.get(metric):
+                db_metrics[metric] = SortedList(getattr(a, metric) for a in data)
+            else:
+                db_metrics[metric].update(getattr(a, metric) for a in data)
 
         self._db_data = db_metrics
 

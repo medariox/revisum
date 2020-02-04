@@ -123,7 +123,7 @@ class Chunk(object):
     @classmethod
     def load_snippet_id(cls, b64_hash, path=None):
         pr_number, repo_id = cls.pr_id_from_hash(b64_hash)
-        maybe_init(pr_number, repo_id, path)
+        maybe_init(pr_number, repo_id, path=path)
 
         chunk = DataChunk.get_or_none(b64_hash=b64_hash)
         if chunk:
