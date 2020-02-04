@@ -17,6 +17,7 @@ class SnippetCollector(object):
     def __init__(self, repo):
         self._gh_session = gh_session()
         self._repo = self._gh_session.get_repo(repo)
+        self._tmp_dir = os.path.join(get_project_root(), 'data', 'tmp')
 
         self.repo_name = self._repo.raw_data['full_name']
         self.repo_id = self._repo.raw_data['id']
@@ -44,7 +45,7 @@ class SnippetCollector(object):
         response = requests.get(url, stream=True)
 
         file_name = '{0}.zip'.format(self.repo_id)
-        file_path = os.path.join(get_project_root(), 'tmp', file_name)
+        file_path = os.path.join(self._tmp_dir, file_name)
 
         print('Downloading branch {0} for {1}...'.format(self.branch, self.repo_name))
         with open(file_path, 'wb') as out_file:
@@ -55,8 +56,8 @@ class SnippetCollector(object):
 
     def _unpack_branch(self):
         file_name = '{0}.zip'.format(self.repo_id)
-        source = os.path.join(get_project_root(), 'tmp', file_name)
-        dest = os.path.join(get_project_root(), 'tmp', str(self.repo_id))
+        source = os.path.join(self._tmp_dir, file_name)
+        dest = os.path.join(self._tmp_dir, str(self.repo_id))
 
         print('Unpacking file {0} for {1}...'.format(file_name, self.repo_name))
         with zipfile.ZipFile(source, 'r') as zip_ref:
@@ -66,7 +67,7 @@ class SnippetCollector(object):
         os.remove(source)
 
     def from_branch(self, delete=True):
-        path = Path(os.path.join(get_project_root(), 'tmp', str(self.repo_id)))
+        path = Path(os.path.join(self._tmp_dir, str(self.repo_id)))
 
         snippets = []
 
