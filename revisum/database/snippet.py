@@ -1,7 +1,11 @@
 import os.path
 
 from ..utils import get_project_root
-from peewee import SqliteDatabase, Model, BlobField, CharField, IntegerField
+from peewee import (
+    SqliteDatabase, Model, BlobField,
+    BooleanField, CharField, DateTimeField,
+    IntegerField
+)
 
 
 db = SqliteDatabase(None)
@@ -36,11 +40,13 @@ def create():
 class Snippet(Model):
 
     snippet_id = CharField()
+    merged = BooleanField()
+    last_mod = DateTimeField()
     start = IntegerField()
     length = IntegerField()
     source = CharField()
     target = CharField()
-    chunk_hashes = BlobField()
+    chunk_ids = BlobField()
 
     class Meta:
         database = db

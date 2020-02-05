@@ -5,13 +5,12 @@ from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 
 from .snippet import Snippet
 from .utils import get_project_root
-from .metrics import Metrics
 
 
 class SnippetTrainer(object):
 
     def __init__(self, repo_id, snippets=None, path=None, external=False):
-        self._snippets = snippets or Snippet.load_all(repo_id, path)
+        self._snippets = snippets or Snippet.load_all(repo_id, merged_only=True, path=path)
         self.repo_id = repo_id
         self.external = external
         self._tokens = []
@@ -62,11 +61,12 @@ class SnippetTrainer(object):
 
             chunks = OrderedDict()
             for chunk in snippet.chunks:
-                chunks[chunk.b64_hash] = chunk
+                if chunk.b64_hash not in chunks:
+                    chunks[chunk.b64_hash] = chunk
 
-            for b64_hash, unique_chunk in chunks.items():
+            for unique_chunk in chunks.values():
                 tagged_line = TaggedDocument(words=unique_chunk.merged_tokens,
-                                             tags=[b64_hash])
+                                             tags=[unique_chunk.chunk_id])
                 tagged_data.append(tagged_line)
 
         self._tagged_data = tagged_data
@@ -140,9 +140,6 @@ class SnippetTrainer(object):
             # model.build_vocab(tagged_data, update=True)
 
         self.iterate(iterations, model=model, model_path=model_path)
-
-        metrics = Metrics(self.repo_id)
-        metrics.save()
 
     def iterate(self, times, **kwargs):
         if not times or times < 1:

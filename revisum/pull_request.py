@@ -72,7 +72,7 @@ class PullRequest(object):
                     continue
 
                 snippet_id = Snippet.make_id(hunk_no, file_no, self.number, self.repo_id)
-                snippet = Snippet(snippet_id, chunks, change.source_file, change.target_file)
+                snippet = Snippet(snippet_id, self.merged, chunks, change.source_file, change.target_file)
                 self._snippets.append(snippet)
 
     @property
@@ -189,7 +189,7 @@ class PullRequest(object):
         for snippet in self.snippets:
             snippet.save()
             for chunk in snippet.chunks:
-                chunk.save(self.number, self.repo_id)
+                chunk.save(self.repo_id)
 
         if self.snippets:
             for valid_review in self.valid_reviews:

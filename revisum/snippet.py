@@ -1,4 +1,5 @@
 import pickle
+from datetime import datetime
 
 from .chunk import Chunk
 from .tokenizer import LineTokenizer
@@ -7,10 +8,11 @@ from .database.snippet import maybe_init, Snippet as DataSnippet
 
 class Snippet(object):
 
-    def __init__(self, snippet_id, chunks, source, target):
+    def __init__(self, snippet_id, merged, chunks, source, target):
         self.snippet_id = snippet_id
+        self.merged = merged
         self._chunks = chunks
-        self._chunk_hashes = []
+        self._chunk_ids = []
         self.start = chunks[0].start
         self.length = self.total_len(chunks[0].start, chunks[-1].end)
         self.source_file = str(source)
@@ -29,11 +31,11 @@ class Snippet(object):
         return self._chunks
 
     @property
-    def chunk_hashes(self):
-        if not self._chunk_hashes:
-            self._chunk_hashes = [c.b64_hash for c in self._chunks]
+    def chunk_ids(self):
+        if not self._chunk_ids:
+            self._chunk_ids = [c.chunk_id for c in self._chunks]
 
-        return self._chunk_hashes
+        return self._chunk_ids
 
     @staticmethod
     def repo_id(snippet_id):
@@ -132,45 +134,53 @@ class Snippet(object):
         if db_snippet:
 
             chunks = []
-            chunk_hashes = pickle.loads(db_snippet.chunk_hashes)
-            for b64_hash in chunk_hashes:
-                chunks.append(Chunk.load(b64_hash))
+            chunk_ids = pickle.loads(db_snippet.chunk_ids)
+            for chunk_id in chunk_ids:
+                chunks.append(Chunk.load(chunk_id))
 
+            merged = db_snippet.merged
             source = db_snippet.source
             target = db_snippet.target
 
-            snippet = cls(snippet_id, chunks, source, target)
+            snippet = cls(snippet_id, merged, chunks, source, target)
             return snippet
 
     @classmethod
-    def load_all(cls, repo_id, path=None):
+    def load_all(cls, repo_id, merged_only=False, path=None):
         maybe_init(repo_id, path=path)
 
         query = DataSnippet.select(
             DataSnippet.snippet_id,
-            DataSnippet.chunk_hashes,
+            DataSnippet.chunk_ids,
             DataSnippet.source,
             DataSnippet.target)
+
+        if merged_only:
+            query = query.where(DataSnippet.merged == 1)
+
+        query = query.order_by(DataSnippet.last_mod.desc())
 
         snippets = []
         for db_snippet in query:
             snippet_id = db_snippet.snippet_id
 
             chunks = []
-            chunk_hashes = pickle.loads(db_snippet.chunk_hashes)
-            for b64_hash in chunk_hashes:
-                chunks.append(Chunk.load(b64_hash))
+            chunk_ids = pickle.loads(db_snippet.chunk_ids)
+            for chunk_id in chunk_ids:
+                chunks.append(Chunk.load(chunk_id))
 
+            merged = db_snippet.merged
             source = db_snippet.source
             target = db_snippet.target
 
-            snippet = cls(snippet_id, chunks, source, target)
+            snippet = cls(snippet_id, merged, chunks, source, target)
+            print('Finished loading snippet with ID: {0}'.format(snippet_id))
             snippets.append(snippet)
 
         return snippets
 
-    def _serialize_hashes(self):
-        return pickle.dumps(self.chunk_hashes, pickle.HIGHEST_PROTOCOL)
+    def _serialize_ids(self):
+        return pickle.dumps(self.chunk_ids, pickle.HIGHEST_PROTOCOL)
 
     def exists(self):
         repo_id = self.repo_id(self.snippet_id)
@@ -187,18 +197,22 @@ class Snippet(object):
         if snippet:
             (DataSnippet
              .update(snippet_id=self.snippet_id,
+                     merged=self.merged,
+                     last_mod=datetime.now(),
                      start=self.start,
                      length=self.length,
                      source=self.source_file,
                      target=self.target_file,
-                     chunk_hashes=self._serialize_hashes())
+                     chunk_ids=self._serialize_ids())
              .where(DataSnippet.snippet_id == self.snippet_id)
              .execute())
         else:
             (DataSnippet
              .create(snippet_id=self.snippet_id,
+                     merged=self.merged,
+                     last_mod=datetime.now(),
                      start=self.start,
                      length=self.length,
                      source=self.source_file,
                      target=self.target_file,
-                     chunk_hashes=self._serialize_hashes()))
+                     chunk_ids=self._serialize_ids()))

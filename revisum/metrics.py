@@ -4,7 +4,7 @@ from radon.complexity import cc_visit_ast
 from radon.raw import analyze
 from sortedcontainers import SortedList
 
-from .database.chunk import Chunk as DataChunk
+from .database.chunk import maybe_init as maybe_init_chunks, Chunk as DataChunk
 from .database.metrics import maybe_init, Metrics as DataMetrics
 
 
@@ -80,15 +80,12 @@ class Metrics(object):
             return self._db_data[metric][int(th) - 1]
 
     def from_chunks(self):
-        maybe_init(self.repo_id)
+        maybe_init_chunks(self.repo_id)
 
         db_metrics = {}
-        data = DataChunk.select()
+        data = DataChunk.select(DataChunk.sloc, DataChunk.complexity)
         for metric in self._metrics:
-            if not db_metrics.get(metric):
-                db_metrics[metric] = SortedList(getattr(a, metric) for a in data)
-            else:
-                db_metrics[metric].update(getattr(a, metric) for a in data)
+            db_metrics[metric] = SortedList(getattr(d, metric) for d in data)
 
         self._db_data = db_metrics
 

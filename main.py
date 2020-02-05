@@ -13,11 +13,11 @@ from revisum.utils import get_project_root
 def train(repo_name):
 
     collector = SnippetCollector(repo_name)
-    collector.collect(limit=20)
+    collector.collect(limit=10)
     SnippetTrainer(collector.repo_id).train(iterations=20, force=False)
 
 
-train('psf/requests')
+train('pymedusa/medusa')
 
 
 def evaluate(repo_id):
@@ -71,6 +71,11 @@ def evaluate(repo_id):
     print(chunk.as_tokens())
 
     print('--------------------------------------')
+    chunk = Chunk.load(sims[1][0])
+    print(chunk.as_text(pretty=True))
+    print(chunk.as_tokens())
+
+    print('--------------------------------------')
     snippet_id = Chunk.load_snippet_id(match_id)
     snippet = Snippet.load(snippet_id)
     for chunk in snippet.chunks:
@@ -78,7 +83,8 @@ def evaluate(repo_id):
         print(str(chunk))
 
     print('--------------------------------------')
-    pr_number, repo_id = Chunk.pr_id_from_hash(match_id)
+    repo_id = Chunk.repo_id(match_id)
+    pr_number = Chunk.pr_number(match_id)
     print('Reason:')
     reviews = Review.load(pr_number, repo_id)
     for review in reviews:

@@ -16,8 +16,9 @@ class ChunkException(Exception):
 
 class Chunk(object):
 
-    def __init__(self, snippet_id, name, no, file_path, body, start, end):
-        self.snippet_id = snippet_id
+    def __init__(self, chunk_id, name, no, file_path, body, start, end):
+        self.chunk_id = chunk_id
+        self._repo_id = chunk_id.split('-', 4)[4]
         self.name = name
         self.no = no
         self.file_path = file_path
@@ -36,6 +37,10 @@ class Chunk(object):
     def __str__(self):
         return dedent('\n'.join(self.lines))
 
+    @classmethod
+    def make_id(cls, no, snippet_id):
+        return '{0}-{1}'.format(no, snippet_id)
+
     @property
     def lines(self):
         if not self._lines:
@@ -49,22 +54,10 @@ class Chunk(object):
         return self._tokens
 
     @property
-    def repo_id(self):
-        return self.snippet_id.split('-', 2)[1]
-
-    @property
-    def pr_id(self):
-        return self.snippet_id.split('-', 2)[2]
-
-    @property
-    def chunk_id(self):
-        return '{0}-{1}'.format(self.no, self.snippet_id)
-
-    @property
     def b64_hash(self):
         if not self._encoded_b64_hash:
             self._encoded_b64_hash = b64_encode(
-                '+'.join([self.pr_id, self.file_path, str(self.start)])
+                '+'.join([self._repo_id, self.file_path, str(self.start)])
             )
 
         return self._encoded_b64_hash
@@ -73,7 +66,7 @@ class Chunk(object):
     def metrics(self):
         if not self._metrics:
             try:
-                self._metrics = Metrics(self.repo_id, code=str(self))
+                self._metrics = Metrics(self._repo_id, code=str(self))
             except MetricsException as e:
                 raise ChunkException(e)
 
@@ -100,17 +93,16 @@ class Chunk(object):
         return self._tokens
 
     @classmethod
-    def load(cls, b64_hash):
-        pr_number, repo_id = cls.pr_id_from_hash(b64_hash)
-        maybe_init(pr_number, repo_id)
+    def load(cls, chunk_id):
+        repo_id = cls.repo_id(chunk_id)
+        maybe_init(repo_id)
 
-        chunk_data = DataChunk.get_or_none(b64_hash=b64_hash)
+        chunk_data = DataChunk.get_or_none(chunk_id=chunk_id)
         if chunk_data:
 
             chunk_body = pickle.loads(chunk_data.body)
-            snippet_id = chunk_data.chunk_id.split('-', 1)[1]
             chunk = Chunk(
-                snippet_id, chunk_data.name, chunk_data.no, chunk_data.file_path,
+                chunk_id, chunk_data.name, chunk_data.no, chunk_data.file_path,
                 chunk_body, chunk_data.start, chunk_data.end
             )
 
@@ -122,11 +114,11 @@ class Chunk(object):
             return chunk
 
     @classmethod
-    def load_snippet_id(cls, b64_hash, path=None):
-        pr_number, repo_id = cls.pr_id_from_hash(b64_hash)
-        maybe_init(pr_number, repo_id, path=path)
+    def load_snippet_id(cls, chunk_id, path=None):
+        repo_id = cls.repo_id(chunk_id)
+        maybe_init(repo_id, path=path)
 
-        chunk = DataChunk.get_or_none(b64_hash=b64_hash)
+        chunk = DataChunk.get_or_none(chunk_id=chunk_id)
         if chunk:
             return chunk.chunk_id.split('-', 1)[1]
 
@@ -142,27 +134,26 @@ class Chunk(object):
         return LineTokenizer(self.as_text()).tokens
 
     @classmethod
-    def pr_number_from_hash(cls, b64_hash):
-        return cls.pr_id_from_hash(b64_hash)[0]
+    def repo_id(cls, chunk_id):
+        return chunk_id.split('-', 4)[4]
 
     @classmethod
-    def repo_id_from_hash(cls, b64_hash):
-        return cls.pr_id_from_hash(b64_hash)[1]
+    def pr_number(cls, chunk_id):
+        return chunk_id.split('-', 4)[3]
 
     @classmethod
     @functools.lru_cache(maxsize=1024)
-    def pr_id_from_hash(cls, b64_hash):
+    def info_from_hash(cls, b64_hash):
         decoded_hash = b64_decode(b64_hash)
-        pr_number, repo_id = decoded_hash.split('+', 1)[0].split('-', 1)
-        return pr_number, repo_id
+        return decoded_hash.split('+')
 
     def _serialize(self):
         return pickle.dumps(self._body, pickle.HIGHEST_PROTOCOL)
 
-    def save(self, pr_number, repo_id):
-        maybe_init(pr_number, repo_id)
+    def save(self, repo_id):
+        maybe_init(repo_id)
 
-        chunk = DataChunk.get_or_none(b64_hash=self.b64_hash)
+        chunk = DataChunk.get_or_none(chunk_id=self.chunk_id)
         if chunk:
             (DataChunk
              .update(chunk_id=self.chunk_id,
@@ -176,7 +167,7 @@ class Chunk(object):
                      last_mod=datetime.now(),
                      sloc=self.metrics.sloc,
                      complexity=self.metrics.complexity)
-             .where(DataChunk.b64_hash == chunk.b64_hash)
+             .where(DataChunk.chunk_id == chunk.chunk_id)
              .execute())
         else:
             (DataChunk

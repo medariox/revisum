@@ -15,7 +15,7 @@ from peewee import (
 db = SqliteDatabase(None)
 
 
-def maybe_init(pr_number, repo_id, path=None):
+def maybe_init(repo_id, path=None):
     if path is not None:
         db_dir = path
     else:
@@ -34,7 +34,7 @@ def maybe_init(pr_number, repo_id, path=None):
 
     if not os.path.isfile(db_path):
         create()
-        print('Chunks database created for: {0}-{1}'.format(pr_number, repo_id))
+        print('Chunks database created for: {0}'.format(repo_id))
 
 
 def create():

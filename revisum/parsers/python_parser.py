@@ -176,7 +176,7 @@ class PythonFileParser(object):
                 self._snippet_body.append(line_tokens)
                 self._snippet_end = i
 
-        if self._snippet_body:
+        if self._snippet_body and self._is_complete():
             self._make_chunk()
 
         chunks = self._chunks
@@ -233,8 +233,9 @@ class PythonFileParser(object):
         self._rm_last_line()
 
         try:
+            chunk_id = Chunk.make_id(self._chunks_count, self.snippet_id)
             chunk = Chunk(
-                self.snippet_id, self.chunk_name, self._chunks_count, self.file_path,
+                chunk_id, self.chunk_name, self._chunks_count, self.file_path,
                 self._snippet_body, self._snippet_start, self._snippet_end
             )
 

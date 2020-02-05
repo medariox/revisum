@@ -5,6 +5,7 @@ from pathlib import Path
 
 import requests
 
+from .metrics import Metrics
 from .pull_request import PullRequest
 from .review import Review
 from .snippet import Snippet
@@ -32,6 +33,10 @@ class SnippetCollector(object):
             snippets += self.from_branch()
 
         snippets += self.from_pulls(limit=limit)
+
+        if snippets:
+            Metrics(self.repo_id).save()
+
         return snippets
 
     def _is_first_run(self):
@@ -79,13 +84,13 @@ class SnippetCollector(object):
                 continue
 
             snippet_id = Snippet.make_id(0, file_no, 0, self.repo_id)
-            snippet = Snippet(snippet_id, chunks, f, f)
+            snippet = Snippet(snippet_id, True, chunks, f, f)
             snippets.append(snippet)
 
         for snippet in snippets:
             snippet.save()
             for chunk in snippet.chunks:
-                chunk.save(0, self.repo_id)
+                chunk.save(self.repo_id)
 
         if delete:
             print('Deleting brach folder {0}...'.format(self.repo_id))
