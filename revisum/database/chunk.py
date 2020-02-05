@@ -4,6 +4,7 @@ from ..utils import get_project_root
 
 from peewee import (
     SqliteDatabase,
+    DateTimeField,
     BlobField,
     Model,
     CharField,
@@ -50,6 +51,7 @@ class Chunk(Model):
     start = IntegerField()
     end = IntegerField()
     body = BlobField()
+    last_mod = DateTimeField()
     sloc = IntegerField()
     complexity = IntegerField()
 

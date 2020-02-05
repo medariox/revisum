@@ -95,10 +95,10 @@ class SnippetCollector(object):
 
     def from_pulls(self, update=True, limit=None):
         pulls = self._repo.get_pulls(state='all', sort='updated', direction='desc')
-        newest_review = Review.newest_accepted(self._repo.id) if update else None
+        newest_review = Review.newest_merged(self._repo.id) if update else None
         limit = limit or 200
 
-        review_count = 0
+        snippets_count = 0
         snippets = []
 
         for pull in pulls:
@@ -108,20 +108,24 @@ class SnippetCollector(object):
                 break
 
             pull_request = PullRequest(self._repo.id, pull.number, self._repo.full_name, pull.head.sha)
-            if pull_request.is_valid:
-                for snippet in pull_request.snippets:
-                    print('-----------------------------------------------------------')
-                    print(str(snippet))
-                    print('-----------------------------------------------------------')
+            if pull_request.supported_snippets:
+                # for snippet in pull_request.snippets:
+                #     print('-----------------------------------------------------------')
+                #     print(str(snippet))
+                #     print('-----------------------------------------------------------')
+
+                if pull_request.merged and pull_request.exists():
+                    print('Reached newest pull request ({0})!'.format(pull.number))
+                    break
 
                 snippets += pull_request.snippets
                 pull_request.save()
-                review_count += 1
+                snippets_count += 1
 
-                print('Total reviews: [{count}/{limit}]'.format(count=review_count, limit=limit))
+                print('Total collected pull requests: [{count}/{limit}]'.format(count=snippets_count, limit=limit))
 
-            if review_count == limit:
-                print('Reached reviews limit ({0})!'.format(limit))
+            if snippets_count == limit:
+                print('Reached pull requests limit ({0})!'.format(limit))
                 break
 
         return snippets

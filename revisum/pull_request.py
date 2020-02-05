@@ -24,21 +24,10 @@ class PullRequest(object):
         self.head_sha = pr_head_sha
 
     @staticmethod
-    def _is_supported(target_file):
+    def is_supported(target_file):
         if target_file.endswith('.py'):
             return True
         return False
-
-    @property
-    def is_valid(self):
-        valid = self.has_valid_review() and self.has_valid_snippet()
-        if valid:
-            print(
-                'Found valid snippet(s) for: {0} [{1}]'.format(
-                    self.title, self.number
-                )
-            )
-        return valid
 
     def change_url(self, path):
         url = 'https://raw.githubusercontent.com/{0}/{1}/{2}'.format(
@@ -52,17 +41,20 @@ class PullRequest(object):
             self._make_snippets()
         return self._snippets
 
-    def has_valid_snippet(self):
-        valid = bool(self.snippets)
-        if not valid:
-            print('No valid snippet for: {0} [{1}]'.format(self.title, self.number))
-        return valid
+    @property
+    def supported_snippets(self):
+        if self.is_concluded and self.snippets:
+            print('Found supported snippet(s) for: {0} [{1}]'.format(self.title, self.number))
+            return True
+
+        print('No supported snippet found for: {0} [{1}]'.format(self.title, self.number))
+        return False
 
     def _make_snippets(self):
         patch = PatchSet(self.patch_content)
 
         for file_no, change in enumerate(patch, 1):
-            if not self._is_supported(change.target_file):
+            if not self.is_supported(change.target_file):
                 continue
 
             normed_path = norm_path(change.target_file)
@@ -138,11 +130,19 @@ class PullRequest(object):
         return self.pull.diff_url
 
     @property
-    def valid_reviews(self):
-        if self._valid_reviews or self.has_valid_review():
-            return self._valid_reviews
+    def is_concluded(self):
+        if self.state == 'closed' or self.merged:
+            return True
+        return False
 
-    def has_valid_review(self):
+    @property
+    def valid_reviews(self):
+        if not self._valid_reviews:
+            self._has_valid_review()
+
+        return self._valid_reviews
+
+    def _has_valid_review(self):
         reviews = self.pull.get_reviews()
         rev_len = reviews.totalCount
         if rev_len > 0:
@@ -153,14 +153,11 @@ class PullRequest(object):
                                self.merged, comment)
                     )
 
-        if not self._valid_reviews and not self._closed_with_comment():
-            print('No review for: {0} [{1}]'.format(self.title, self.number))
-            return False
-
-        if self._valid_reviews:
+        if self._valid_reviews or self._closed_with_comment():
+            print('Found review or comment for: {0} [{1}]'.format(self.title, self.number))
             return True
 
-        print('No valid review for: {0} [{1}]'.format(self.title, self.number))
+        print('No review found for: {0} [{1}]'.format(self.title, self.number))
         return False
 
     def _closed_with_comment(self):
@@ -181,12 +178,19 @@ class PullRequest(object):
 
         return False
 
-    def save(self):
-        if self.valid_reviews:
-            for snippet in self._snippets:
-                snippet.save()
-                for chunk in snippet.chunks:
-                    chunk.save(self.number, self.repo_id)
+    def exists(self):
+        for snippet in self.snippets:
+            if snippet.exists():
+                return True
 
-            for valid_review in self._valid_reviews:
+        return False
+
+    def save(self):
+        for snippet in self.snippets:
+            snippet.save()
+            for chunk in snippet.chunks:
+                chunk.save(self.number, self.repo_id)
+
+        if self.snippets:
+            for valid_review in self.valid_reviews:
                 valid_review.save()

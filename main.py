@@ -13,7 +13,7 @@ from revisum.utils import get_project_root
 def train(repo_name):
 
     collector = SnippetCollector(repo_name)
-    collector.collect(limit=5)
+    collector.collect(limit=20)
     SnippetTrainer(collector.repo_id).train(iterations=20, force=False)
 
 

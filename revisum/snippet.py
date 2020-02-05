@@ -172,6 +172,13 @@ class Snippet(object):
     def _serialize_hashes(self):
         return pickle.dumps(self.chunk_hashes, pickle.HIGHEST_PROTOCOL)
 
+    def exists(self):
+        repo_id = self.repo_id(self.snippet_id)
+        maybe_init(repo_id)
+
+        snippet = DataSnippet.get_or_none(snippet_id=self.snippet_id)
+        return bool(snippet)
+
     def save(self):
         repo_id = self.repo_id(self.snippet_id)
         maybe_init(repo_id)

@@ -1,5 +1,6 @@
 import functools
 import pickle
+from datetime import datetime
 from itertools import chain
 from textwrap import dedent
 
@@ -172,6 +173,7 @@ class Chunk(object):
                      start=self.start,
                      end=self.end,
                      body=self._serialize(),
+                     last_mod=datetime.now(),
                      sloc=self.metrics.sloc,
                      complexity=self.metrics.complexity)
              .where(DataChunk.b64_hash == chunk.b64_hash)
@@ -186,5 +188,6 @@ class Chunk(object):
                      start=self.start,
                      end=self.end,
                      body=self._serialize(),
+                     last_mod=datetime.now(),
                      sloc=self.metrics.sloc,
                      complexity=self.metrics.complexity))
