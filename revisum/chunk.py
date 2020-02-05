@@ -4,6 +4,9 @@ from datetime import datetime
 from itertools import chain
 from textwrap import dedent
 
+from pygments import lex
+from pygments.lexers import PythonLexer
+
 from .metrics import Metrics, MetricsException
 from .tokenizer import LineTokenizer
 from .utils import b64_decode, b64_encode
@@ -100,7 +103,11 @@ class Chunk(object):
         chunk_data = DataChunk.get_or_none(chunk_id=chunk_id)
         if chunk_data:
 
-            chunk_body = pickle.loads(chunk_data.body)
+            chunk_lines = pickle.loads(chunk_data.body)
+            chunk_body = []
+            for line in chunk_lines:
+                chunk_body.append(list(lex(line, PythonLexer())))
+
             chunk = Chunk(
                 chunk_id, chunk_data.name, chunk_data.no, chunk_data.file_path,
                 chunk_body, chunk_data.start, chunk_data.end
@@ -123,15 +130,10 @@ class Chunk(object):
             return chunk.chunk_id.split('-', 1)[1]
 
     def as_text(self, pretty=False):
-        lines = []
-        for line_tokens in self._body:
-            line = ''.join(line[1] for line in line_tokens)
-            lines.append(line.rstrip())
+        return '\n'.join(self.lines) if pretty else self.lines
 
-        return '\n'.join(lines) if pretty else lines
-
-    def as_tokens(self):
-        return LineTokenizer(self.as_text()).tokens
+    def as_tokens(self, pretty=False):
+        return self.merged_tokens if pretty else LineTokenizer(self.lines).tokens
 
     @classmethod
     def repo_id(cls, chunk_id):
@@ -148,7 +150,7 @@ class Chunk(object):
         return decoded_hash.split('+')
 
     def _serialize(self):
-        return pickle.dumps(self._body, pickle.HIGHEST_PROTOCOL)
+        return pickle.dumps(self.lines, pickle.HIGHEST_PROTOCOL)
 
     def save(self, repo_id):
         maybe_init(repo_id)

@@ -87,7 +87,7 @@ class Snippet(object):
             destination = self._source_lines
 
         for line in lines:
-            single_line = str(line).rstrip()
+            single_line = str(line)
             if single_line.startswith(pre_char):
                 single_line = single_line.replace(pre_char, ' ', 1)
             destination.append(single_line)

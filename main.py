@@ -17,7 +17,7 @@ def train(repo_name):
     SnippetTrainer(collector.repo_id).train(iterations=20, force=False)
 
 
-train('pymedusa/medusa')
+train('psf/requests')
 
 
 def evaluate(repo_id):
@@ -69,6 +69,7 @@ def evaluate(repo_id):
     chunk = Chunk.load(match_id)
     print(chunk.as_text(pretty=True))
     print(chunk.as_tokens())
+    print(chunk.as_tokens(pretty=True))
 
     print('--------------------------------------')
     chunk = Chunk.load(sims[1][0])
