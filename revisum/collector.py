@@ -109,7 +109,7 @@ class SnippetCollector(object):
 
         for pull in pulls:
 
-            if newest_review and newest_review == pull.number:
+            if update and newest_review and newest_review == pull.number:
                 print('Reached newest review ({0})!'.format(newest_review))
                 break
 
@@ -120,7 +120,7 @@ class SnippetCollector(object):
                 #     print(str(snippet))
                 #     print('-----------------------------------------------------------')
 
-                if pull_request.merged and pull_request.exists():
+                if update and pull_request.merged and pull_request.exists():
                     print('Reached newest pull request ({0})!'.format(pull.number))
                     break
 
