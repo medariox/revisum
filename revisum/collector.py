@@ -87,6 +87,7 @@ class SnippetCollector(object):
             snippet = Snippet(snippet_id, True, chunks, f, f)
             snippets.append(snippet)
 
+        print('Saving snippets for: {0}...'.format(self.repo_id))
         for snippet in snippets:
             snippet.save()
             for chunk in snippet.chunks:

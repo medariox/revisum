@@ -186,11 +186,13 @@ class PullRequest(object):
         return False
 
     def save(self):
+        print('Saving snippets for: {0}...'.format(self.repo_id))
         for snippet in self.snippets:
             snippet.save()
             for chunk in snippet.chunks:
                 chunk.save(self.repo_id)
 
         if self.snippets:
+            print('Saving reviews for: {0}...'.format(self.repo_id))
             for valid_review in self.valid_reviews:
                 valid_review.save()

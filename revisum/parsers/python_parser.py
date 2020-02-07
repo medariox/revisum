@@ -95,62 +95,69 @@ class PythonFileParser(object):
         return False
 
     def next_chunk(self, line_tokens):
-        return self.is_func_or_class(line_tokens) or self._is_new_chunk(line_tokens[0])
+        return self.is_func_or_class(line_tokens) and self._is_next_chunk(line_tokens[0])
 
     def is_func_or_class(self, line_tokens):
-        for i, token in enumerate(line_tokens):
-            # Remember the first token
-            if i == 0:
-                first_token = token
-
-            if token[1] == '__init__':
-                continue
-
-            if token[0] not in (Token.Name.Class, Token.Name.Function,
-                                Token.Name.Function.Magic):
-                continue
-
-            if self._snippet_body:
-                # Detect inner functions based on indentations
-                if first_token[0] == Token.Text and first_token[1].strip() == '':
-                    first_body_token = self._snippet_body[0][0]
-
-                    # Current chunk also starts with an indent
-                    if first_body_token[0] == Token.Text:
-                        if len(first_body_token[1]) < len(first_token[1]):
-                            return False
-
-                    # Current chunk starts with a keyword
-                    elif first_body_token[0] == Token.Keyword:
-                        body_token_type = self._snippet_body[0][2][0]
-                        if body_token_type != Token.Name.Class:
-                            return False
-
-            return True
-
-    def _is_new_chunk(self, first_line_token):
-        if not self._snippet_body:
-            return False
-
-        if first_line_token[1] == '\n':
-            return False
-
-        if first_line_token[0] == Token.Name.Decorator:
-            return True
-
-        if first_line_token[0] == Token.Comment.Single:
-            return True
-
-        first_token = self._snippet_body[0][0]
-        # Detect indentation level of current chunk
-        if first_token[0] == Token.Text and first_token[1].strip() == '':
-            first_token_len = len(first_token[1])
+        if len(line_tokens) > 2 and line_tokens[0][0] == Token.Keyword:
+            name_token = line_tokens[2]
+        elif len(line_tokens) > 3 and line_tokens[1][0] == Token.Keyword:
+            name_token = line_tokens[3]
         else:
-            first_token_len = 0
+            return False
 
-        if first_line_token[0] == Token.Text:
-            if len(first_line_token[1]) <= first_token_len:
+        if name_token[1] == '__init__' or name_token[0] == Token.Name.Function.Magic:
+            return False
+
+        if name_token[0] not in (Token.Name.Class, Token.Name.Function):
+            return False
+
+        return True
+
+    def _is_next_chunk(self, first_line_tokens):
+        if not self._snippet_body:
+            return True
+
+        if first_line_tokens[0][1] == '\n':
+            return False
+
+        first_body_type = self._snippet_body[0][2]
+        if first_body_type[0] == Token.Name.Class:
+            func_in_class = (x[0] for b in self._snippet_body for x in b)
+            count = 0
+            for func in func_in_class:
+                if func == Token.Name.Function:
+                    count += 1
+            if count < 1:
+                return False
+
+        first_token_type = [token[0] for token in first_line_tokens[0:4]]
+        if Token.Name.Decorator in first_token_type:
+            return True
+
+        if Token.Name.Function in first_token_type or Token.Name.Class in first_token_type:
+
+            first_token = self._snippet_body[0][0]
+            # Detect indentation level of current chunk
+            if first_token[0] == Token.Text and first_token[1].strip() == '':
+                first_token_len = len(first_token[1])
+            else:
+                first_token_len = 0
+
+            if first_line_tokens[0][0] == Token.Keyword:
                 return True
+            elif first_line_tokens[1][0] == Token.Keyword:
+                if first_body_type[0] == Token.Name.Class:
+                    # Inner function
+                    if first_token_len + 4 == len(first_line_tokens[0][1]):
+                        return True
+                if len(first_line_tokens[0][1]) <= first_token_len:
+                    return True
+
+        if first_line_tokens[0][0] == Token.Comment.Single:
+            return True
+
+        if first_line_tokens[0][0] == Token.Name:
+            return True
 
         return False
 
@@ -161,7 +168,7 @@ class PythonFileParser(object):
         for i, line in self._read(start=start):
             line_tokens = list(lex(line, PythonLexer()))
 
-            if self.next_chunk(line_tokens):
+            if self._is_next_chunk(line_tokens):
                 if self._is_complete():
                     self._make_chunk()
 
@@ -171,6 +178,8 @@ class PythonFileParser(object):
                 if self.is_func_or_class(line_tokens):
                     self._snippet_body.append(line_tokens)
                     self._snippet_start = i
+                elif self._snippet_body:
+                    self._snippet_body.append(line_tokens)
 
             elif self._snippet_body:
                 self._snippet_body.append(line_tokens)
