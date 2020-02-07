@@ -147,7 +147,7 @@ class PythonFileParser(object):
                 return True
             elif first_line_tokens[1][0] == Token.Keyword:
                 if first_body_type[0] == Token.Name.Class:
-                    # Inner function
+                    # First inner function
                     if first_token_len + 4 == len(first_line_tokens[0][1]):
                         return True
                 if len(first_line_tokens[0][1]) <= first_token_len:
