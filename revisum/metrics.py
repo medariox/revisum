@@ -110,6 +110,7 @@ class Metrics(object):
 
     def save(self):
         maybe_init(self.repo_id)
+        print('Saving metrics for: {0}...'.format(self.repo_id))
 
         for metric in self._metrics:
             met = DataMetrics.get_or_none(name=metric)
