@@ -94,7 +94,7 @@ class SnippetCollector(object):
                 chunk.save(self.repo_id)
 
         if delete:
-            print('Deleting brach folder {0}...'.format(self.repo_id))
+            print('Deleting branch folder {0}...'.format(self.repo_id))
             shutil.rmtree(path)
 
         return snippets
@@ -127,10 +127,6 @@ class SnippetCollector(object):
 
             pull_request = PullRequest(self._repo.id, pull.number, self._repo.full_name, pull.head.sha)
             if pull_request.supported_snippets:
-                # for snippet in pull_request.snippets:
-                #     print('-----------------------------------------------------------')
-                #     print(str(snippet))
-                #     print('-----------------------------------------------------------')
 
                 if update and pull_request.merged and pull_request.exists():
                     print('Reached newest pull request ({0})!'.format(pull.number))
