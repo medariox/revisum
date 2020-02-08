@@ -54,6 +54,7 @@ class Chunk(Model):
     last_mod = DateTimeField()
     sloc = IntegerField()
     complexity = IntegerField()
+    cognitive = IntegerField()
 
     class Meta:
         database = db

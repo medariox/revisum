@@ -1,5 +1,6 @@
 from ast import parse
 
+from cognitive_complexity.api import get_cognitive_complexity
 from radon.complexity import cc_visit_ast
 from radon.raw import analyze
 from sortedcontainers import SortedList
@@ -19,16 +20,18 @@ class Metrics(object):
         self._code = code
         self._db_data = {}
 
-        self._metrics = ['sloc', 'complexity']
+        self._metrics = ['sloc', 'complexity', 'cognitive']
         self._thresholds = {'low': 1, 'med': 2, 'high': 3, 'very_high': 4}
 
         self._sloc = 0
         self._complexity = 0
+        self._cognitive = 0
         self._ast_node = None
 
         if code:
             self.sloc
             self.complexity
+            self.cognitive
 
     @property
     def sloc(self):
@@ -61,6 +64,21 @@ class Metrics(object):
         self._complexity = value
 
     @property
+    def cognitive(self):
+        if not self._cognitive:
+            cog = self.ast_node
+            if not cog:
+                raise MetricsException('Error while computing Cognitive complexity: no result')
+            else:
+                self._cognitive = get_cognitive_complexity(cog.body[0])
+
+        return self._cognitive
+
+    @cognitive.setter
+    def cognitive(self, value):
+        self._cognitive = value
+
+    @property
     def ast_node(self):
         if not self._ast_node:
             try:
@@ -83,7 +101,8 @@ class Metrics(object):
         maybe_init_chunks(self.repo_id)
 
         db_metrics = {}
-        data = DataChunk.select(DataChunk.sloc, DataChunk.complexity)
+        data = DataChunk.select(DataChunk.sloc, DataChunk.complexity,
+                                DataChunk.cognitive)
         for metric in self._metrics:
             db_metrics[metric] = SortedList(getattr(d, metric) for d in data)
 

@@ -116,6 +116,7 @@ class Chunk(object):
             metrics = Metrics(repo_id)
             metrics.sloc = chunk_data.sloc
             metrics.complexity = chunk_data.complexity
+            metrics.cognitive = chunk_data.cognitive
             chunk.metrics = metrics
 
             return chunk
@@ -168,7 +169,8 @@ class Chunk(object):
                      body=self._serialize(),
                      last_mod=datetime.now(),
                      sloc=self.metrics.sloc,
-                     complexity=self.metrics.complexity)
+                     complexity=self.metrics.complexity,
+                     cognitive=self.metrics.cognitive)
              .where(DataChunk.chunk_id == chunk.chunk_id)
              .execute())
         else:
@@ -183,4 +185,5 @@ class Chunk(object):
                      body=self._serialize(),
                      last_mod=datetime.now(),
                      sloc=self.metrics.sloc,
-                     complexity=self.metrics.complexity))
+                     complexity=self.metrics.complexity,
+                     cognitive=self.metrics.cognitive))
