@@ -13,6 +13,7 @@ class PullRequest(object):
                     'coveralls']
 
     def __init__(self, repo_id, pr_number, repo_name=None, pr_head_sha=None):
+        self._repo = None
         self._pull = None
         self._patch_content = None
         self._valid_reviews = []
@@ -20,8 +21,8 @@ class PullRequest(object):
 
         self.repo_id = repo_id
         self.number = pr_number
-        self.repo_name = repo_name
-        self.head_sha = pr_head_sha
+        self._repo_name = repo_name
+        self._head_sha = pr_head_sha
 
     @staticmethod
     def is_supported(target_file):
@@ -40,6 +41,19 @@ class PullRequest(object):
         if not self._snippets:
             self._make_snippets()
         return self._snippets
+
+    @property
+    def head_sha(self):
+        if not self._head_sha:
+            self._head_sha = self.pull.head.sha
+        return self._head_sha
+
+    @property
+    def repo_name(self):
+        if not self._repo_name:
+            self._repo_name = self.repo.full_name
+
+        return self._repo_name
 
     @property
     def supported_snippets(self):
@@ -76,6 +90,13 @@ class PullRequest(object):
                 self._snippets.append(snippet)
 
     @property
+    def repo(self):
+        if not self._repo:
+            self._repo = gh_session().get_repo(self.repo_id)
+
+        return self._repo
+
+    @property
     def pull(self):
         """
         Get the pull request.
@@ -84,8 +105,7 @@ class PullRequest(object):
         :type: PullRequest object
         """
         if not self._pull:
-            pull = gh_session().get_repo(self.repo_id).get_pull(self.number)
-            self._pull = pull
+            self._pull = self.repo.get_pull(self.number)
 
         return self._pull
 

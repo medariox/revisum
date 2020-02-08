@@ -99,6 +99,18 @@ class SnippetCollector(object):
 
         return snippets
 
+    def from_remote(self, snippet_url):
+        raw_snippet = requests.get(snippet_url)
+        if raw_snippet:
+            parser = PythonFileParser(0, self.repo_id, snippet_url, raw_snippet)
+            chunks = parser.parse()
+            if not chunks:
+                return
+
+            snippet_id = Snippet.make_id(0, 0, 0, self.repo_id)
+            snippet = Snippet(snippet_id, False, chunks, snippet_url, snippet_url)
+            return snippet
+
     def from_pulls(self, update=True, limit=None):
         pulls = self._repo.get_pulls(state='all', sort='updated', direction='desc')
         newest_review = Review.newest_merged(self._repo.id) if update else None

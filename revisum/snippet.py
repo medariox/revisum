@@ -24,7 +24,7 @@ class Snippet(object):
         self._source_tokens = []
 
     def __str__(self):
-        return '\n'.join(self.target_lines())
+        return '\n-------------------------\n'.join(self.to_text())
 
     @property
     def chunks(self):
@@ -55,51 +55,19 @@ class Snippet(object):
         length = end - start + 1
         return length
 
-    def target_lines(self):
-        if not self._target_lines:
-            # self._normalize_lines('target')
-            for chunk in self._chunks:
-                for line in chunk.lines:
-                    self._target_lines.append(line)
+    def to_tokens(self):
+        chunks = []
+        for chunk in self._chunks:
+            chunks.append(chunk.as_tokens())
 
-        return self._target_lines
+        return chunks
 
-    def source_lines(self):
-        if not self._source_lines:
-            self._normalize_lines('source')
-        return self._source_lines
+    def to_text(self):
+        chunks = []
+        for chunk in self._chunks:
+            chunks.append(chunk.as_text(pretty=True))
 
-    @staticmethod
-    def _verify_arg(arg):
-        if arg not in ('target', 'source'):
-            raise ValueError('{arg} value has to be either `target` or'
-                             ' `source`.'.format(arg=arg))
-
-    def _normalize_lines(self, origin):
-        self._verify_arg(origin)
-        if origin == 'target':
-            lines = self._chunks.target_lines()
-            pre_char = '+'
-            destination = self._target_lines
-        elif origin == 'source':
-            lines = self._chunks.source_lines()
-            pre_char = '-'
-            destination = self._source_lines
-
-        for line in lines:
-            single_line = str(line)
-            if single_line.startswith(pre_char):
-                single_line = single_line.replace(pre_char, ' ', 1)
-            destination.append(single_line)
-
-    def to_tokens(self, origin):
-        self._verify_arg(origin)
-        if origin == 'target':
-            lines = self.target_lines()
-        elif origin == 'source':
-            lines = self.source_lines()
-
-        return LineTokenizer(lines).tokens
+        return chunks
 
     @classmethod
     def as_tokens(cls, code):

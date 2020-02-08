@@ -80,7 +80,7 @@ class SnippetTrainer(object):
         """
         snippet_lines = []
         # Only use target snippets for now
-        for line in snippet.to_tokens('target'):
+        for line in snippet.to_tokens():
             snippet_lines += line
 
         return {snippet.snippet_id: snippet_lines}
@@ -92,20 +92,34 @@ class SnippetTrainer(object):
             return []
 
         model = Doc2Vec.load(model_path)
+
         results = []
-        for snippet_tokens in self.tokens:
-            snippet = {}
-            for snippet_id, token_list in snippet_tokens.items():
-                new_vector = model.infer_vector(token_list)
+        for snpt in self.snippets:
+            snippet = OrderedDict()
+            snippet['snippet_id'] = snpt.snippet_id
+
+            for chnk in snpt.chunks:
+                new_vector = model.infer_vector(chnk.merged_tokens)
                 sims = model.docvecs.most_similar([new_vector])
 
-                candidates = [{'id': snip[0], 'confidence': snip[1]}
+                candidates = [{'chunk_id': snip[0], 'confidence': snip[1]}
                               for snip in sims if snip[1] >= threshold]
-                if candidates:
-                    snippet['id'] = snippet_id
-                    snippet['candidates'] = candidates
 
-                    results.append(snippet)
+                chunk_info = OrderedDict()
+                chunk_info['chunk_id'] = chnk.chunk_id
+                chunk_info['metrics'] = {
+                    'sloc': chnk.metrics.sloc,
+                    'complexity': chnk.metrics.complexity,
+                    'cognitive': chnk.metrics.cognitive
+                }
+                chunk_info['candidates'] = candidates
+
+                if snippet.get('chunks') is None:
+                    snippet['chunks'] = [chunk_info]
+                else:
+                    snippet['chunks'].append(chunk_info)
+
+            results.append(snippet)
 
         return results
 

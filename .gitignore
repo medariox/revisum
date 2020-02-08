@@ -119,3 +119,6 @@ dmypy.json
 
 # Tests
 tests/data/
+
+# Data
+revisum/data/

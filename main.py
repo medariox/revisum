@@ -17,7 +17,7 @@ def train(repo_name):
     SnippetTrainer(collector.repo_id).train(iterations=20, force=False)
 
 
-train('psf/requests')
+#train('psf/requests')
 
 
 def evaluate(repo_id):
@@ -79,9 +79,7 @@ def evaluate(repo_id):
     print('--------------------------------------')
     snippet_id = Chunk.load_snippet_id(match_id)
     snippet = Snippet.load(snippet_id)
-    for chunk in snippet.chunks:
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print(str(chunk))
+    print(str(snippet))
 
     print('--------------------------------------')
     repo_id = Chunk.repo_id(match_id)
