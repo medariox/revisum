@@ -1,4 +1,5 @@
 from ast import parse
+from collections import OrderedDict
 
 from cognitive_complexity.api import get_cognitive_complexity
 from radon.complexity import cc_visit_ast
@@ -27,6 +28,7 @@ class Metrics(object):
         self._complexity = 0
         self._cognitive = 0
         self._ast_node = None
+        self._rating = None
 
         if code:
             self.sloc
@@ -88,6 +90,13 @@ class Metrics(object):
 
         return self._ast_node
 
+    @property
+    def rating(self):
+        if not self._rating:
+            self._rating = self.from_db()
+
+        return self._rating
+
     def risk_profile(self, metric, threshold):
         if not self._db_data:
             self.from_chunks()
@@ -107,6 +116,28 @@ class Metrics(object):
             db_metrics[metric] = SortedList(getattr(d, metric) for d in data)
 
         self._db_data = db_metrics
+
+    def from_db(self):
+        maybe_init(self.repo_id)
+
+        query = DataMetrics.select().namedtuples()
+        thresholds = OrderedDict()
+        for metric in query:
+            thresholds[metric.name] = {
+                5: metric.low, 4: metric.med,
+                3: metric.high, 2: metric.very_high
+            }
+
+        metrics_count = len(self._metrics)
+        ratings = [1 for m in range(metrics_count)]
+        for i, met in enumerate(self._metrics):
+            measured = getattr(self, met)
+            for rating, threshold in thresholds[met].items():
+                if measured <= threshold:
+                    ratings[i] = rating
+                    break
+
+        return round(sum(ratings) / metrics_count, 2)
 
     def save(self):
         maybe_init(self.repo_id)

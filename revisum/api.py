@@ -1,12 +1,11 @@
 import hug
-import requests
 
 from revisum.pull_request import PullRequest
 from revisum.trainer import SnippetTrainer
 from revisum.collector import SnippetCollector
 from revisum.snippet import Snippet
 from revisum.review import Review
-from revisum.utils import gh_session
+from revisum.chunk import Chunk
 
 
 @hug.get('/snippets/{snippet_id}')
@@ -25,6 +24,13 @@ def retrieve(snippet_id: hug.types.text):
             'reviews': revs,
             'tokens': snippet.to_tokens()
         }
+
+
+@hug.get('/chunks/{chunk_id}')
+def retrieve_chunk(chunk_id: hug.types.text):
+    chunk = Chunk.load(chunk_id)
+
+    return chunk.to_json()
 
 
 @hug.get('/repos/{repo_id}/snippets')

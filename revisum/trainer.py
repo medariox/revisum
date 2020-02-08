@@ -105,13 +105,7 @@ class SnippetTrainer(object):
                 candidates = [{'chunk_id': snip[0], 'confidence': snip[1]}
                               for snip in sims if snip[1] >= threshold]
 
-                chunk_info = OrderedDict()
-                chunk_info['chunk_id'] = chnk.chunk_id
-                chunk_info['metrics'] = {
-                    'sloc': chnk.metrics.sloc,
-                    'complexity': chnk.metrics.complexity,
-                    'cognitive': chnk.metrics.cognitive
-                }
+                chunk_info = chnk.to_json()
                 chunk_info['candidates'] = candidates
 
                 if snippet.get('chunks') is None:

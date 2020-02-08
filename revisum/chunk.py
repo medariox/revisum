@@ -1,5 +1,6 @@
 import functools
 import pickle
+from collections import OrderedDict
 from datetime import datetime
 from itertools import chain
 from textwrap import dedent
@@ -94,6 +95,18 @@ class Chunk(object):
     def _to_tokens(self):
         self._tokens = LineTokenizer(self.lines).tokens
         return self._tokens
+
+    def to_json(self):
+        chunk = OrderedDict()
+        chunk['chunk_id'] = self.chunk_id
+        chunk['rating'] = self.metrics.rating
+        chunk['metrics'] = {
+            'sloc': self.metrics.sloc,
+            'complexity': self.metrics.complexity,
+            'cognitive': self.metrics.cognitive
+        }
+
+        return chunk
 
     @classmethod
     def load(cls, chunk_id):
