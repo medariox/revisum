@@ -85,6 +85,13 @@ class Chunk(object):
         merged = list(chain.from_iterable(self.tokens))
         return merged
 
+    def to_json(self):
+        chunk = OrderedDict()
+        chunk['chunk_id'] = self.chunk_id
+        chunk.update(self.metrics.to_json())
+
+        return chunk
+
     def _to_text(self):
         for line_tokens in self._body:
             line = ''.join(line[1] for line in line_tokens)
@@ -96,17 +103,22 @@ class Chunk(object):
         self._tokens = LineTokenizer(self.lines).tokens
         return self._tokens
 
-    def to_json(self):
-        chunk = OrderedDict()
-        chunk['chunk_id'] = self.chunk_id
-        chunk['rating'] = self.metrics.rating
-        chunk['metrics'] = {
-            'sloc': self.metrics.sloc,
-            'complexity': self.metrics.complexity,
-            'cognitive': self.metrics.cognitive
-        }
+    @classmethod
+    def compare(cls, chunk_id, other_chunk_id):
+        chunk = cls.load(chunk_id)
+        other_chunk = cls.load(other_chunk_id)
 
-        return chunk
+        result = {}
+        rating = round(other_chunk.metrics.rating - chunk.metrics.rating, 2)
+        result['rating'] = rating
+
+        metrics = {}
+        metrics['sloc'] = round(other_chunk.metrics.sloc - chunk.metrics.sloc, 2)
+        metrics['complexity'] = round(other_chunk.metrics.complexity - chunk.metrics.complexity, 2)
+        metrics['cognitive'] = round(other_chunk.metrics.cognitive - chunk.metrics.cognitive, 2)
+        result['metrics'] = metrics
+
+        return result
 
     @classmethod
     def load(cls, chunk_id):
@@ -126,7 +138,7 @@ class Chunk(object):
                 chunk_body, chunk_data.start, chunk_data.end
             )
 
-            metrics = Metrics(repo_id)
+            metrics = Metrics(repo_id, code=str(chunk))
             metrics.sloc = chunk_data.sloc
             metrics.complexity = chunk_data.complexity
             metrics.cognitive = chunk_data.cognitive

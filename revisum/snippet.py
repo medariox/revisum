@@ -1,7 +1,9 @@
 import pickle
+from collections import OrderedDict
 from datetime import datetime
 
 from .chunk import Chunk
+from .review import Review
 from .tokenizer import LineTokenizer
 from .database.snippet import maybe_init, Snippet as DataSnippet
 
@@ -25,6 +27,18 @@ class Snippet(object):
 
     def __str__(self):
         return '\n-------------------------\n'.join(self.to_text())
+
+    def to_json(self):
+        snippet = OrderedDict()
+        snippet['snippet_id'] = self.snippet_id
+
+        reviews = Review.load(self.pr_number(self.snippet_id),
+                              self.repo_id(self.snippet_id))
+        snippet['reviews'] = [review.to_json() for review in reviews]
+
+        snippet['chunk_ids'] = self.chunk_ids
+
+        return snippet
 
     @property
     def chunks(self):

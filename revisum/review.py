@@ -1,17 +1,19 @@
+from collections import OrderedDict
+
 from .database.review import Review as DataReview, maybe_init
 
 
 class Review(object):
 
-    def __init__(self, repo_id, pr_number, pr_merged, comment, state=None):
+    def __init__(self, repo_id, pr_number, pr_merged, **kwargs):
         self.repo_id = repo_id
         self.pr_number = pr_number
         self.pr_merged = pr_merged
-        self.body = comment.body
-        self.comment_id = comment.id
-        self.user_id = comment.user.id
-        self.user_login = comment.user.login
-        self.state = state or comment.state
+        self.body = kwargs['body']
+        self.comment_id = kwargs['comment_id']
+        self.user_id = kwargs['user_id']
+        self.user_login = kwargs['user_login']
+        self.state = kwargs['state']
 
     @property
     def rating(self):
@@ -22,18 +24,49 @@ class Review(object):
 
         return 1.0
 
+    @property
+    def pull_id(self):
+        return '{0}-{1}'.format(self.pr_number, self.repo_id)
+
+    def to_json(self):
+        review = OrderedDict()
+        review['review_id'] = self.comment_id
+        review['pull_id'] = self.pull_id
+        review['rating'] = self.rating
+        review['body'] = self.body
+
+        return review
+
+    @classmethod
+    def load_single(cls, repo_id, review_id):
+        maybe_init(repo_id)
+
+        review = DataReview.get_or_none(
+            DataReview.comment_id == review_id)
+        if review:
+            rev = cls(review.repo_id, review.pr_number, review.pr_merged,
+                      body=review.body, comment_id=review.comment_id,
+                      user_id=review.user_id, user_login=review.user_login,
+                      state=review.state)
+            return rev.to_json()
+
     @classmethod
     def load(cls, pr_number, repo_id):
         maybe_init(repo_id)
 
-        review = DataReview.select().where(
+        db_reviews = DataReview.select().where(
             (DataReview.pr_number == pr_number) &
             (DataReview.repo_id == repo_id))
 
-        if review:
-            return review
+        reviews = []
+        for review in db_reviews:
+            rev = cls(review.repo_id, review.pr_number, review.pr_merged,
+                      body=review.body, comment_id=review.comment_id,
+                      user_id=review.user_id, user_login=review.user_login,
+                      state=review.state)
+            reviews.append(rev)
 
-        return []
+        return reviews
 
     @classmethod
     def newest_merged(cls, repo_id):

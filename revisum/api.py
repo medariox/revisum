@@ -12,18 +12,14 @@ from revisum.chunk import Chunk
 def retrieve_snippet(snippet_id: hug.types.text):
     snippet = Snippet.load(snippet_id)
 
-    if snippet:
-        reviews = Review.load(Snippet.pr_number(snippet_id),
-                              Snippet.repo_id(snippet_id))
+    return snippet.to_json()
 
-        revs = [{'rating': review.rating, 'body': review.body}
-                for review in reviews]
 
-        return {
-            'snippet_id': snippet_id,
-            'reviews': revs,
-            'tokens': snippet.to_tokens()
-        }
+@hug.get('/snippets/{snippet_id}/reviews')
+def retrieve_reviews(snippet_id: hug.types.text):
+    snippet = Snippet.load(snippet_id)
+
+    return snippet.to_json()['reviews']
 
 
 @hug.get('/chunks/{chunk_id}')
@@ -31,6 +27,20 @@ def retrieve_chunk(chunk_id: hug.types.text):
     chunk = Chunk.load(chunk_id)
 
     return chunk.to_json()
+
+
+@hug.get('/chunks/{chunk_id}/compare/{other_chunk_id}')
+def retrieve_chunk(chunk_id: hug.types.text, other_chunk_id: hug.types.text):
+    chunk = Chunk.compare(chunk_id, other_chunk_id)
+
+    return chunk
+
+
+@hug.get('/repos/{repo_id}/reviews/{pull_id}')
+def retrieve_review(repo_id: hug.types.number, pull_id: hug.types.number):
+    db_review = Review.load_single(repo_id, pull_id)
+
+    return db_review
 
 
 @hug.get('/repos/{repo_id}/snippets')

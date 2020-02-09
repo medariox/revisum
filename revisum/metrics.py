@@ -35,6 +35,17 @@ class Metrics(object):
             self.complexity
             self.cognitive
 
+    def to_json(self):
+        metrics = OrderedDict()
+        metrics['rating'] = self.rating
+        metrics['metrics'] = {
+            'sloc': self.sloc,
+            'complexity': self.complexity,
+            'cognitive': self.cognitive
+        }
+
+        return metrics
+
     @property
     def sloc(self):
         if not self._sloc:

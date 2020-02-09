@@ -170,7 +170,9 @@ class PullRequest(object):
                 if comment.body != '':
                     self._valid_reviews.append(
                         Review(self.repo_id, self.number,
-                               self.merged, comment)
+                               self.merged, body=comment.body, comment_id=comment.id,
+                               user_id=comment.user.id, user_login=comment.user.login,
+                               state=comment.state)
                     )
 
         if self._valid_reviews or self._closed_with_comment():
@@ -192,7 +194,9 @@ class PullRequest(object):
                         continue
                     self._valid_reviews.append(
                         Review(self.repo_id, self.number, self.merged,
-                               comment, state='CLOSED')
+                               body=comment.body, comment_id=comment.id,
+                               user_id=comment.user.id, user_login=comment.user.login,
+                               state='CLOSED')
                     )
                 return True
 
