@@ -64,15 +64,15 @@ def evaluate_pull(repo_id: hug.types.number, pull_number: hug.types.number,
 
 
 @hug.put('/repos/{repo_id}/collect')
-def collect(repo_id: hug.types.number, limit: hug.types.number = 10):
+def collect(repo_id: hug.types.number, limit: hug.types.number = 10, iterations: hug.types.number = 20):
     SnippetCollector(repo_id).collect(limit=limit)
+    SnippetTrainer(repo_id).train(iterations=iterations)
 
-    return 'Finished collecting for repository: {0}'.format(repo_id)
+    return 'Finished collecting and training for repository: {0}'.format(repo_id)
 
 
 @hug.put('/repos/{repo_id}/train')
-def train(repo_id: hug.types.number, limit: hug.types.number = 10, iterations: hug.types.number = 100):
-    snippets = SnippetCollector(repo_id).from_pulls(limit=limit)
-    SnippetTrainer(repo_id, snippets).train(iterations=iterations, force=True)
+def train(repo_id: hug.types.number, iterations: hug.types.number = 20):
+    SnippetTrainer(repo_id).train(iterations=iterations)
 
     return 'Finished training for repository: {0}'.format(repo_id)

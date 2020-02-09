@@ -114,7 +114,7 @@ class SnippetCollector(object):
     def from_pulls(self, update=True, limit=None):
         pulls = self._repo.get_pulls(state='all', sort='updated', direction='desc')
         newest_review = Review.newest_merged(self._repo.id) if update else None
-        limit = limit or 200
+        limit = limit or 50
 
         snippets_count = 0
         snippets = []

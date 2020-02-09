@@ -17,7 +17,7 @@ def train(repo_name):
     SnippetTrainer(collector.repo_id).train(iterations=20, force=False)
 
 
-#train('psf/requests')
+train('psf/requests')
 
 
 def evaluate(repo_id):
@@ -91,6 +91,10 @@ def evaluate(repo_id):
         print(review.rating)
         print('Body:')
         print(review.body)
+
+    print('--------------------------------------')
+    print('Unique word tokens: {0}'.format(len(model.wv.vocab)))
+    print('Trained document tags: {0}'.format(len(model.docvecs)))
 
 
 evaluate('1362490')

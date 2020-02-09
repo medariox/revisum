@@ -89,6 +89,7 @@ class Chunk(object):
         chunk = OrderedDict()
         chunk['chunk_id'] = self.chunk_id
         chunk.update(self.metrics.to_json())
+        chunk['tokens'] = self.tokens
 
         return chunk
 

@@ -117,7 +117,7 @@ class SnippetTrainer(object):
 
         return results
 
-    def train(self, iterations=100, force=False, path=None):
+    def train(self, iterations=20, force=False, path=None):
         if path is not None:
             model_dir = path
         else:
