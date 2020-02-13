@@ -4,6 +4,7 @@ from collections import OrderedDict
 from datetime import datetime
 from itertools import chain
 from textwrap import dedent
+from zlib import compress, decompress
 
 from pygments import lex
 from pygments.lexers import PythonLexer
@@ -129,7 +130,7 @@ class Chunk(object):
         chunk_data = DataChunk.get_or_none(chunk_id=chunk_id)
         if chunk_data:
 
-            chunk_lines = pickle.loads(chunk_data.body)
+            chunk_lines = pickle.loads(decompress(chunk_data.body))
             chunk_body = []
             for line in chunk_lines:
                 chunk_body.append(list(lex(line, PythonLexer())))
@@ -177,7 +178,7 @@ class Chunk(object):
         return decoded_hash.split('+')
 
     def _serialize(self):
-        return pickle.dumps(self.lines, pickle.HIGHEST_PROTOCOL)
+        return compress(pickle.dumps(self.lines, pickle.HIGHEST_PROTOCOL))
 
     def save(self, repo_id):
         maybe_init(repo_id)
