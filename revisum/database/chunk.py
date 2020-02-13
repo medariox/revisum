@@ -44,7 +44,7 @@ def create():
 class Chunk(Model):
 
     chunk_id = CharField()
-    b64_hash = CharField()
+    sha1_hash = CharField()
     name = CharField()
     no = IntegerField()
     file_path = CharField()

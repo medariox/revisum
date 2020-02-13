@@ -61,8 +61,8 @@ class SnippetTrainer(object):
 
             chunks = OrderedDict()
             for chunk in snippet.chunks:
-                if chunk.b64_hash not in chunks:
-                    chunks[chunk.b64_hash] = chunk
+                if chunk.sha1_hash not in chunks:
+                    chunks[chunk.sha1_hash] = chunk
 
             for unique_chunk in chunks.values():
                 tagged_line = TaggedDocument(words=unique_chunk.merged_tokens,

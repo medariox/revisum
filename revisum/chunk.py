@@ -2,6 +2,7 @@ import functools
 import pickle
 from collections import OrderedDict
 from datetime import datetime
+from hashlib import sha1
 from itertools import chain
 from textwrap import dedent
 from zlib import compress, decompress
@@ -34,6 +35,7 @@ class Chunk(object):
         self._lines = []
         self._tokens = []
         self._metrics = None
+        self._sha1_hash = None
         self._encoded_b64_hash = None
 
         # Compute metrics
@@ -57,6 +59,14 @@ class Chunk(object):
         if not self._tokens:
             self._to_tokens()
         return self._tokens
+
+    @property
+    def sha1_hash(self):
+        if not self._sha1_hash:
+            string = '+'.join([self._repo_id, self.file_path, str(self.start)])
+            self._sha1_hash = sha1(string.encode('utf-8')).hexdigest()
+
+        return self._sha1_hash
 
     @property
     def b64_hash(self):
@@ -173,7 +183,7 @@ class Chunk(object):
 
     @classmethod
     @functools.lru_cache(maxsize=1024)
-    def info_from_hash(cls, b64_hash):
+    def info_from_b64(cls, b64_hash):
         decoded_hash = b64_decode(b64_hash)
         return decoded_hash.split('+')
 
@@ -187,7 +197,7 @@ class Chunk(object):
         if chunk:
             (DataChunk
              .update(chunk_id=self.chunk_id,
-                     b64_hash=self.b64_hash,
+                     sha1_hash=self.sha1_hash,
                      name=self.name,
                      no=self.no,
                      file_path=self.file_path,
@@ -203,7 +213,7 @@ class Chunk(object):
         else:
             (DataChunk
              .create(chunk_id=self.chunk_id,
-                     b64_hash=self.b64_hash,
+                     sha1_hash=self.sha1_hash,
                      name=self.name,
                      no=self.no,
                      file_path=self.file_path,
