@@ -68,6 +68,10 @@ class Chunk(object):
 
         return self._sha1_hash
 
+    @sha1_hash.setter
+    def sha1_hash(self, value):
+        self._sha1_hash = value
+
     @property
     def b64_hash(self):
         if not self._encoded_b64_hash:
@@ -149,6 +153,7 @@ class Chunk(object):
                 chunk_id, chunk_data.name, chunk_data.no, chunk_data.file_path,
                 chunk_body, chunk_data.start, chunk_data.end
             )
+            chunk.sha1_hash = chunk_data.sha1_hash
 
             metrics = Metrics(repo_id, code=str(chunk))
             metrics.sloc = chunk_data.sloc
