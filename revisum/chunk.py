@@ -155,7 +155,7 @@ class Chunk(object):
             )
             chunk.sha1_hash = chunk_data.sha1_hash
 
-            metrics = Metrics(repo_id, code=str(chunk))
+            metrics = Metrics(repo_id)
             metrics.sloc = chunk_data.sloc
             metrics.complexity = chunk_data.complexity
             metrics.cognitive = chunk_data.cognitive

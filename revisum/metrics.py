@@ -24,9 +24,9 @@ class Metrics(object):
         self._metrics = ['sloc', 'complexity', 'cognitive']
         self._thresholds = {'low': 1, 'med': 2, 'high': 3, 'very_high': 4}
 
-        self._sloc = 0
-        self._complexity = 0
-        self._cognitive = 0
+        self._sloc = None
+        self._complexity = None
+        self._cognitive = None
         self._ast_node = None
         self._rating = None
 
@@ -48,7 +48,7 @@ class Metrics(object):
 
     @property
     def sloc(self):
-        if not self._sloc:
+        if self._sloc is None:
             try:
                 raw = analyze(self._code)
                 self._sloc = raw.sloc
@@ -63,7 +63,7 @@ class Metrics(object):
 
     @property
     def complexity(self):
-        if not self._complexity:
+        if self._complexity is None:
             comp = cc_visit_ast(self.ast_node)
             if not comp:
                 raise MetricsException('Error while computing Complexity: no result')
@@ -78,7 +78,7 @@ class Metrics(object):
 
     @property
     def cognitive(self):
-        if not self._cognitive:
+        if self._cognitive is None:
             cog = self.ast_node
             if not cog:
                 raise MetricsException('Error while computing Cognitive complexity: no result')
@@ -103,7 +103,7 @@ class Metrics(object):
 
     @property
     def rating(self):
-        if not self._rating:
+        if self._rating is None:
             self._rating = self.from_db()
 
         return self._rating
