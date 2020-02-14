@@ -193,7 +193,7 @@ class Chunk(object):
         return decoded_hash.split('+')
 
     def _serialize(self):
-        return compress(pickle.dumps(self.lines, pickle.HIGHEST_PROTOCOL))
+        return compress(pickle.dumps(self.lines, pickle.HIGHEST_PROTOCOL), compression_level=7)
 
     def save(self, repo_id):
         maybe_init(repo_id)
