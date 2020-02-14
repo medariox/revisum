@@ -5,7 +5,7 @@ from datetime import datetime
 from hashlib import sha1
 from itertools import chain
 from textwrap import dedent
-from zlib import compress, decompress
+from lz4.frame import compress, decompress
 
 from pygments import lex
 from pygments.lexers import PythonLexer
