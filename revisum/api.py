@@ -30,7 +30,7 @@ def retrieve_chunk(chunk_id: hug.types.text):
 
 
 @hug.get('/chunks/{chunk_id}/compare/{other_chunk_id}')
-def retrieve_chunk(chunk_id: hug.types.text, other_chunk_id: hug.types.text):
+def compare_chunk(chunk_id: hug.types.text, other_chunk_id: hug.types.text):
     chunk = Chunk.compare(chunk_id, other_chunk_id)
 
     return chunk
@@ -47,8 +47,10 @@ def retrieve_review(repo_id: hug.types.number, pull_id: hug.types.number):
 def evaluate_snippet(repo_id: hug.types.number, snippet_url: hug.types.text,
                      threshold: float = 0.75):
     snippet = SnippetCollector(repo_id).from_remote(snippet_url)
+    if not snippet:
+        return []
 
-    return SnippetTrainer(repo_id, snippet).evaluate(
+    return SnippetTrainer(repo_id, [snippet]).evaluate(
         threshold=threshold
     )
 

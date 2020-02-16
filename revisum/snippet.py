@@ -5,6 +5,7 @@ from datetime import datetime
 from .chunk import Chunk
 from .review import Review
 from .tokenizer import LineTokenizer
+from .utils import norm_path
 from .database.snippet import maybe_init, Snippet as DataSnippet
 
 
@@ -17,8 +18,8 @@ class Snippet(object):
         self._chunk_ids = []
         self.start = chunks[0].start
         self.length = self.total_len(chunks[0].start, chunks[-1].end)
-        self.source_file = str(source)
-        self.target_file = str(target)
+        self.source_file = norm_path(str(source))
+        self.target_file = norm_path(str(target))
 
         self._target_lines = []
         self._source_lines = []

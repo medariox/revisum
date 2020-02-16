@@ -27,12 +27,11 @@ def evaluate(repo_id):
 
     code = [
         """
-        def normalize_percent_encode(x):
-            # Helper function that normalizes equivalent
-            # percent-encoded bytes before comparisons
-            for c in re.findall(r'%[a-fA-F0-9]{2}', x):
-                x = x.replace(c, c.upper())
-            return x
+        def guess_filename(obj):
+            name = getattr(obj, 'name', None)
+            if (name and isinstance(name, basestring) and name[0] != '<' and
+                name[-1] != '>'):
+            return os.path.basename(name)
         """
     ]
 
@@ -48,10 +47,10 @@ def evaluate(repo_id):
         """
     ]
 
-    tokens = Snippet.as_tokens(code2)
+    tokens = Snippet.as_tokens(code)
     print(tokens)
 
-    elements = Snippet.as_elements(code2)
+    elements = Snippet.as_elements(code)
     print(elements)
 
     new_vector = model.infer_vector(tokens)
@@ -70,11 +69,6 @@ def evaluate(repo_id):
     print(chunk.as_text(pretty=True))
     print(chunk.as_tokens())
     print(chunk.as_tokens(pretty=True))
-
-    print('--------------------------------------')
-    chunk = Chunk.load(sims[1][0])
-    print(chunk.as_text(pretty=True))
-    print(chunk.as_tokens())
 
     print('--------------------------------------')
     snippet_id = Chunk.load_snippet_id(match_id)

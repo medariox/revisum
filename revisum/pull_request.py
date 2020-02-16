@@ -32,7 +32,7 @@ class PullRequest(object):
 
     def change_url(self, path):
         url = 'https://raw.githubusercontent.com/{0}/{1}/{2}'.format(
-            self.repo_name, self.head_sha, path
+            self.repo_name, self.head_sha, norm_path(path)
         )
         return url
 
@@ -71,11 +71,11 @@ class PullRequest(object):
             if not self.is_supported(change.target_file):
                 continue
 
-            normed_path = norm_path(change.target_file)
-            snippet_url = self.change_url(normed_path)
+            snippet_url = self.change_url(change.target_file)
             raw_snippet = requests.get(snippet_url)
             if raw_snippet:
-                parser = PythonFileParser(self.number, self.repo_id, normed_path, raw_snippet)
+                parser = PythonFileParser(self.number, self.repo_id,
+                                          change.target_file, raw_file=raw_snippet)
 
             for hunk_no, hunk in enumerate(change, 1):
 

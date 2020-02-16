@@ -47,7 +47,7 @@ class SnippetTrainer(object):
     @property
     def tagged_data(self):
         if not self._tagged_data:
-            self._tagged_data = self._make_tagged_data()
+            self._tagged_data = list(self._make_tagged_data())
 
         return self._tagged_data
 

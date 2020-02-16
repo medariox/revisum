@@ -9,9 +9,10 @@ from ..utils import reverse_enum, norm_path
 
 class PythonFileParser(object):
 
-    def __init__(self, pr_number, repo_id, file_path, raw_file=None):
+    def __init__(self, pr_number, repo_id, file_path, file_name=None, raw_file=None):
         self.pr_number = pr_number
         self.repo_id = repo_id
+        self._file_name = file_name
         self._raw_file = raw_file
         self._file_path = str(file_path)
         self._file_len = None
@@ -38,6 +39,9 @@ class PythonFileParser(object):
 
     @property
     def file_path(self):
+        if self._file_name:
+            return norm_path(str(self._file_name))
+
         return norm_path(self._file_path)
 
     @property

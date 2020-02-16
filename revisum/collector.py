@@ -20,6 +20,7 @@ class SnippetCollector(object):
         self._repo = self._gh_session.get_repo(repo)
         self._tmp_dir = os.path.join(get_project_root(), 'data', 'tmp')
 
+        self.name = self._repo.raw_data['name']
         self.repo_name = self._repo.raw_data['full_name']
         self.repo_id = self._repo.raw_data['id']
         self.branch = self._repo.default_branch
@@ -72,19 +73,21 @@ class SnippetCollector(object):
         os.remove(source)
 
     def from_branch(self, delete=True):
+        dir_name = '{0}-{1}'.format(self.name, self.branch)
         path = Path(os.path.join(self._tmp_dir, str(self.repo_id)))
 
         snippets = []
 
         files = list(path.rglob('*.py'))
-        for file_no, f in enumerate(files, 1):
-            parser = PythonFileParser(0, self.repo_id, f)
+        for file_no, file_path in enumerate(files, 1):
+            file_name = file_path.relative_to(os.path.join(path, dir_name))
+            parser = PythonFileParser(0, self.repo_id, file_path, file_name=file_name)
             chunks = parser.parse(file_no=file_no)
             if not chunks:
                 continue
 
             snippet_id = Snippet.make_id(0, file_no, 0, self.repo_id)
-            snippet = Snippet(snippet_id, True, chunks, f, f)
+            snippet = Snippet(snippet_id, True, chunks, file_name, file_name)
             snippets.append(snippet)
 
         print('Saving snippets for: {0}...'.format(self.repo_id))
@@ -102,7 +105,7 @@ class SnippetCollector(object):
     def from_remote(self, snippet_url):
         raw_snippet = requests.get(snippet_url)
         if raw_snippet:
-            parser = PythonFileParser(0, self.repo_id, snippet_url, raw_snippet)
+            parser = PythonFileParser(0, self.repo_id, snippet_url, raw_file=raw_snippet)
             chunks = parser.parse()
             if not chunks:
                 return
