@@ -142,7 +142,6 @@ class Snippet(object):
 
         query = query.order_by(DataSnippet.last_mod.desc())
 
-        snippets = []
         for db_snippet in query:
             snippet_id = db_snippet.snippet_id
 
@@ -157,9 +156,7 @@ class Snippet(object):
 
             snippet = cls(snippet_id, merged, chunks, source, target)
             print('Finished loading snippet with ID: {0}'.format(snippet_id))
-            snippets.append(snippet)
-
-        return snippets
+            yield snippet
 
     def _serialize_ids(self):
         return pickle.dumps(self.chunk_ids, pickle.HIGHEST_PROTOCOL)

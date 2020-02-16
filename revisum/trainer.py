@@ -22,12 +22,9 @@ class SnippetTrainer(object):
         Snippets used for the training.
 
         :return: All the availible snippets.
-        :type: list
+        :type: generator
         """
-        if not isinstance(self._snippets, list):
-            self._snippets = [self._snippets]
-
-        return self._snippets
+        return iter(self._snippets)
 
     @property
     def tokens(self):
@@ -50,26 +47,23 @@ class SnippetTrainer(object):
     @property
     def tagged_data(self):
         if not self._tagged_data:
-            self._make_tagged_data()
+            self._tagged_data = self._make_tagged_data()
 
         return self._tagged_data
 
     def _make_tagged_data(self):
-        tagged_data = []
+        chunks_sha1 = set()
 
         for snippet in self.snippets:
-
-            chunks = OrderedDict()
             for chunk in snippet.chunks:
-                if chunk.sha1_hash not in chunks:
-                    chunks[chunk.sha1_hash] = chunk
+                # Skip chunks that were already added
+                if chunk.sha1_hash in chunks_sha1:
+                    continue
 
-            for unique_chunk in chunks.values():
-                tagged_line = TaggedDocument(words=unique_chunk.merged_tokens,
-                                             tags=[unique_chunk.chunk_id])
-                tagged_data.append(tagged_line)
-
-        self._tagged_data = tagged_data
+                chunks_sha1.add(chunk.sha1_hash)
+                tagged_line = TaggedDocument(words=chunk.merged_tokens,
+                                             tags=[chunk.chunk_id])
+                yield tagged_line
 
     @staticmethod
     def _to_tokens(snippet):
