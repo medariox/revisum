@@ -32,7 +32,7 @@ class Review(object):
         review = OrderedDict()
         review['review_id'] = self.comment_id
         review['pull_id'] = self.pull_id
-        review['rating'] = self.rating
+        review['review_rating'] = self.rating
         review['body'] = self.body
 
         return review
