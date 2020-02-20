@@ -55,7 +55,7 @@ def evaluate_snippet(repo_id: hug.types.number, snippet_url: hug.types.text,
     )
 
 
-@hug.get('/repos/{repo_id}/pulls/{pull_number}')
+@hug.get('/repos/{repo_id}/pulls/{pull_number}/snippets')
 def evaluate_pull(repo_id: hug.types.number, pull_number: hug.types.number,
                   threshold: float = 0.75):
     snippets = PullRequest(repo_id, pull_number).snippets
