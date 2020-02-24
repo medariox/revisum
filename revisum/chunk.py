@@ -103,6 +103,9 @@ class Chunk(object):
     def to_json(self):
         chunk = OrderedDict()
         chunk['chunk_id'] = self.chunk_id
+        chunk['sha1_hash'] = self.sha1_hash
+        chunk['name'] = self.name
+        chunk['file_path'] = self.file_path
         chunk.update(self.metrics.to_json())
         chunk['tokens'] = self.tokens
 
