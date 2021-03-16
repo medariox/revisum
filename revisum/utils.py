@@ -6,8 +6,6 @@ from github import Github
 
 
 gh_access_token = ''
-gh_username = 'revisum-user'
-gh_password = 'revisumtest123'
 
 
 def get_project_root():
@@ -19,8 +17,6 @@ def gh_session():
     """Returns a PyGithub session."""
     if gh_access_token:
         return Github(gh_access_token)
-    elif gh_username and gh_password:
-        return Github(gh_username, gh_password)
 
     return Github()
 
