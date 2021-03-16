@@ -11,13 +11,14 @@ from revisum.utils import get_project_root
 
 
 def collect(repo_name):
-    print('Collecting and training {0} started.'.format(repo_name))
+    print('Collecting and training of {0} started.'.format(repo_name))
 
     collector = SnippetCollector(repo_name)
     collector.collect(limit=10)
     SnippetTrainer(collector.repo_id).train(iterations=20, force=False)
 
 
+# Repository org/name to collect
 collect('psf/requests')
 
 
@@ -88,4 +89,5 @@ def evaluate(repo_id):
     print('Trained document tags: {0}'.format(len(model.docvecs)))
 
 
+# Repository ID to evaluate
 evaluate('1362490')
